@@ -9,11 +9,12 @@ Bulklift will walk a tree of source audio (arranged into albums), look for `.bul
 Features:
 
 -  Generate multiple collections of output audio from a single source tree
--  Automatically add [replaygain](https://en.wikipedia.org/wiki/ReplayGain) tags to output files (presently using the excellent [r128gain](https://pypi.org/project/r128gain/))
+-  Automatically add [replaygain](https://en.wikipedia.org/wiki/ReplayGain) tags to output files (presently using the excellent [r128gain](https://github.com/desbma/r128gain))
 -  Inheritable, per-directory config system makes specifying settings a breeze
 -  Toggle the output tree(s) a source album will be transcoded to.  Want 70s hair metal on your phone but not your laptop?  No problemo.
 -  Copies album art (gif, png, jpg) unmolested to the output directory
 -  Passthrough `copy` output format to get music onto your flac player
+-  Multithreading (4x faster on my Raspberry Pi media server!)
 
 Bulklift has approximately zero bells and whistles.  It doesn't try to be clever and decisions about metadata are left to the user.  It won't download misspellings of your favourite artist's name from CDDB and won't force strange genres from other people's tags upon your filesystem.  Never again will Taylor Swift darken your goth folder.
 
@@ -36,6 +37,11 @@ TBD: release binaries compiled with [PyInstaller](http://www.pyinstaller.org/), 
 ```plain
 $ ./code/bulklift /path/to/my/source_tree
 ```
+
+## Common Operations
+
+-   Regenerate an album (e.g. if your encoder has improved) - delete the directory from your output tree(s) and run bulklift again.
+
 
 ## Configuration
 Yaml, nothing more.
