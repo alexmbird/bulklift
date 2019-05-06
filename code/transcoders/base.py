@@ -34,9 +34,19 @@ class TranscoderBase(object):
       self.OUTPUT_DIR_TEMPLATE.format(**self.metadata)
     )
 
-    # Cache some settings to make the code neater
-    self.ffmpeg_path = dict_deep_get(self.config, ('binaries', 'ffmpeg'))
-    self.r128gain_path = dict_deep_get(self.config, ('binaries', 'r128gain'))
+    # Find the binaries we will call
+    self.ffmpeg_path = self._getFfmpegBinary()
+    if self.ffmpeg_path is None:
+      sys.exit("Fatal: no ffmpeg binary available")
+    else:
+      puts("Using ffmpeg {}".format(self.ffmpeg_path))
+    self.r128gain_path = self._getR128gainBinary()
+    if self.r128gain_path is None:
+      sys.exit("Fatal: no r128gain binary available")
+    else:
+      puts("Using r128gain {}".format(self.r128gain_path))
+
+    # Determine some other settings
     self.r128gain_album = dict_deep_get(self.output_spec, ('gain', 'album'), True)
     self.output_dir_mode = \
       int(dict_deep_get(self.output_spec, ('permissions', 'dir_mode'), default='0750'), 8)
@@ -44,6 +54,20 @@ class TranscoderBase(object):
       int(dict_deep_get(self.output_spec, ('permissions', 'file_mode'), default='0750'), 8)
     self.output_user = dict_deep_get(self.output_spec, ('permissions', 'user'), default=None)
     self.output_group = dict_deep_get(self.output_spec, ('permissions', 'group'), default=None)
+
+
+  def _getFfmpegBinary(self):
+    try:
+      return dict_deep_get(self.config, ('binaries', 'ffmpeg'))
+    except KeyError:
+      return shutil.which('ffmpeg')
+
+
+  def _getR128gainBinary(self):
+    try:
+      return dict_deep_get(self.config, ('binaries', 'r128gain'))
+    except KeyError:
+      return shutil.which('r128gain')
 
 
   def outputFileName(self, source_file):
