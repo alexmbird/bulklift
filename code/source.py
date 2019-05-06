@@ -9,11 +9,6 @@ from util import dict_deep_merge
 from transcoders import TRANSCODERS
 
 
-class ConfigError(FileNotFoundError):
-  "Config file was absent/malformed"
-
-
-
 class MediaSourceNode(object):
 
   CONFIG_YAML_FILE = '.bulklift.yaml'
@@ -28,6 +23,11 @@ class MediaSourceNode(object):
   @property
   def config_path(self):
     return os.path.join(self.path, self.CONFIG_YAML_FILE)
+
+
+  @property
+  def root(self):
+    return self if self.parent is None else self.parent
 
 
   def _loadConfig(self):
@@ -45,13 +45,11 @@ class MediaSourceNode(object):
   def walk(self):
     subnodes = [MediaSourceNode(d.path, self) for d in os.scandir(self.path) if d.is_dir()]
     for node in subnodes:
-      puts(str(node))
-      with indent(2):
-        node.populateOutputs()
-        node.walk()
+      node.doTranscoding()
+      node.walk()
 
 
-  def populateOutputs(self):
+  def doTranscoding(self):
     for o_name, o_spec in self.config.get('outputs', {}).items():
       if o_spec.get('enabled', False):
         transcoder = TRANSCODERS[o_spec['codec']](

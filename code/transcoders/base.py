@@ -38,13 +38,13 @@ class TranscoderBase(object):
     self.ffmpeg_path = self._getFfmpegBinary()
     if self.ffmpeg_path is None:
       sys.exit("Fatal: no ffmpeg binary available")
-    else:
-      puts("Using ffmpeg {}".format(self.ffmpeg_path))
+    # else:
+    #   puts("Using ffmpeg {}".format(self.ffmpeg_path))
     self.r128gain_path = self._getR128gainBinary()
     if self.r128gain_path is None:
       sys.exit("Fatal: no r128gain binary available")
-    else:
-      puts("Using r128gain {}".format(self.r128gain_path))
+    # else:
+    #   puts("Using r128gain {}".format(self.r128gain_path))
 
     # Determine some other settings
     self.r128gain_album = dict_deep_get(self.output_spec, ('gain', 'album'), True)
