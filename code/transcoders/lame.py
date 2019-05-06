@@ -13,13 +13,13 @@ class TranscoderLame(TranscoderBase):
 
   def __init__(self, *args, **kwargs):
     super(TranscoderLame, self).__init__(*args, **kwargs)
-    self.lame_vbr = dict_deep_get(self.output_spec, ('vbr',), default='3')
+    self.lame_vbr = dict_deep_get(self.output_spec, ('lame_vbr',), default='3')
 
 
   def buildTranscodeCmd(self, name):
     """ Return a command appropriate for transcoding the specified file """
     source_path = os.path.join(self.source.path, name)
-    target_path = os.path.join(self.output_dir_name, self.outputFileName(name))
+    target_path = os.path.join(self.output_album_path, self.outputFileName(name))
     return [
       self.ffmpeg_path,
       '-y', '-loglevel', 'error',

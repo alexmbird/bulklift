@@ -13,13 +13,13 @@ class TranscoderOpus(TranscoderBase):
 
   def __init__(self, *args, **kwargs):
     super(TranscoderOpus, self).__init__(*args, **kwargs)
-    self.opus_bitrate = dict_deep_get(self.output_spec, ('bitrate',), default='128k')
+    self.opus_bitrate = dict_deep_get(self.output_spec, ('opus_bitrate',), default='128k')
 
 
   def buildTranscodeCmd(self, name):
     """ Return a command appropriate for transcoding the specified file """
     source_path = os.path.join(self.source.path, name)
-    target_path = os.path.join(self.output_dir_name, self.outputFileName(name))
+    target_path = os.path.join(self.output_album_path, self.outputFileName(name))
     return [
       self.ffmpeg_path,
       '-y', '-loglevel', 'error',

@@ -4,7 +4,7 @@ import shutil
 import subprocess
 from multiprocessing.pool import ThreadPool
 
-from clint.textui import indent, puts
+from clint.textui import indent, puts, colored
 
 from util import file_ext_match, dict_deep_get
 
@@ -18,7 +18,7 @@ class TranscoderBase(object):
   PRESERVE_TYPES = ('.gif', '.jpg', '.jpeg', '.png')
 
 
-  OUTPUT_DIR_TEMPLATE = "__{genre}/{artist}/{year} {album}"
+  OUTPUT_DIR_TEMPLATE = "{genre}/{artist}/{year} {album}"
   FILE_EXTENSION = 'test'
 
 
@@ -29,22 +29,18 @@ class TranscoderBase(object):
     self.output_spec = output_spec
     self.config = config
 
-    self.output_dir_name = os.path.join(
-      os.path.expandvars(dict_deep_get(self.output_spec, ('path',))),
-      self.OUTPUT_DIR_TEMPLATE.format(**self.metadata)
-    )
+    # Determine where our output is going
+    self.output_path = os.path.expandvars(dict_deep_get(self.output_spec, ('path',)))
+    self.output_album_dir = self.OUTPUT_DIR_TEMPLATE.format(**self.metadata)
+    self.output_album_path = os.path.join(self.output_path, self.output_album_dir)
 
     # Find the binaries we will call
     self.ffmpeg_path = self._getFfmpegBinary()
     if self.ffmpeg_path is None:
       sys.exit("Fatal: no ffmpeg binary available")
-    # else:
-    #   puts("Using ffmpeg {}".format(self.ffmpeg_path))
     self.r128gain_path = self._getR128gainBinary()
     if self.r128gain_path is None:
       sys.exit("Fatal: no r128gain binary available")
-    # else:
-    #   puts("Using r128gain {}".format(self.r128gain_path))
 
     # Determine some other settings
     self.r128gain_album = dict_deep_get(self.output_spec, ('gain', 'album'), True)
@@ -81,7 +77,8 @@ class TranscoderBase(object):
 
   def makeOutputDir(self):
     """ Make the output dir we'll be transcoding content into """
-    os.makedirs(self.output_dir_name, self.output_dir_mode, exist_ok=False)
+    os.makedirs(self.output_album_path, self.output_dir_mode, exist_ok=False)
+    puts("Created dest dir '{}'".format(self.output_album_dir))
 
 
   def transcode(self):
@@ -89,7 +86,7 @@ class TranscoderBase(object):
     try:
       self.makeOutputDir()
     except OSError:
-      puts("Target dir already exists; skipping")
+      puts("Dest dir '{}' already exists; skipping".format(self.output_album_dir))
       return
     self.copyPreservedFiles()
     self.transcodeMediaFiles()
@@ -107,10 +104,9 @@ class TranscoderBase(object):
     ]
     for name in files_copy:
       source_path = os.path.join(self.source.path, name)
-      target_path = os.path.join(self.output_dir_name, name)
-      puts("COPY  '{}' -> '{}'".format(source_path, target_path))
+      target_path = os.path.join(self.output_album_path, name)
+      puts("Copying '{}'".format(name))
       shutil.copy(source_path, target_path)
-      os.chmod(target_path, self.output_file_mode)
 
 
   def transcodeMediaFiles(self):
@@ -121,11 +117,17 @@ class TranscoderBase(object):
         and not d.name.startswith('.')
     ]
     cmds = [self.buildTranscodeCmd(name) for name in files_transcode]
-    run = lambda cmd: subprocess.run(cmd, check=True)
-    with ThreadPool(processes=os.cpu_count()) as pool:
-      pool.map(run, cmds)   # should use map_async with a callout to note errors
+    with ThreadPool() as pool:
+      puts("Transcoding...")
+      result = pool.map_async(subprocess.run, cmds)
       pool.close()
       pool.join()
+      for cp in result.get():
+        head, tail = os.path.split(cp.args[-1])
+        if cp.returncode == 0:
+          puts("Transcoded '{}'".format(tail))
+        else:
+          puts(colored.red("Failed '{}'".format(tail)))
 
 
   def r128gain(self):
@@ -136,22 +138,27 @@ class TranscoderBase(object):
       '--opus-output-gain',
       '--recursive',
       '--verbosity', 'warning',
-      self.output_dir_name
+      self.output_album_path
     ]
     if self.r128gain_album:
       cmd.insert(1, '--album-gain')
-    subprocess.run(cmd, check=True)
+    puts("Running r128gain on output dir")
+    cp = subprocess.run(cmd)
+    if cp.returncode == 0:
+      puts("Added replaygain tags")
+    else:
+      puts(colored.red("Failed to add replaygain tags"))
 
 
   def setOutputPermissions(self):
     """ Set desired perms / ownership on output dir and its contents """
-    os.chmod(self.output_dir_name, self.output_dir_mode)
-    for d in os.scandir(self.output_dir_name):
-      os.chmod(os.path.join(self.output_dir_name, d.name), self.output_file_mode)
+    os.chmod(self.output_album_path, self.output_dir_mode)
+    for d in os.scandir(self.output_album_path):
+      os.chmod(os.path.join(self.output_album_path, d.name), self.output_file_mode)
     if self.output_user or self.output_group:
-      shutil.chown(self.output_dir_name, user=self.output_user, group=self.output_group)
-      for d in os.scandir(self.output_dir_name):
-        shutil.chown(os.path.join(self.output_dir_name, d.name), user=self.output_user, group=self.output_group)
+      shutil.chown(self.output_album_path, user=self.output_user, group=self.output_group)
+      for d in os.scandir(self.output_album_path):
+        shutil.chown(os.path.join(self.output_album_path, d.name), user=self.output_user, group=self.output_group)
 
 
   def buildTranscodeCmd(self, name):
@@ -161,4 +168,4 @@ class TranscoderBase(object):
 
 
   def __str__(self):
-    return "<{} writing to '{}'>".format(self.__class__.__name__, self.output_dir_name)
+    return "<{} writing to '{}'>".format(self.__class__.__name__, self.output_path)
