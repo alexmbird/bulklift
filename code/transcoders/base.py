@@ -30,7 +30,7 @@ class TranscoderBase(object):
     self.config = config
 
     self.output_dir_name = os.path.join(
-      dict_deep_get(self.output_spec, ('path',)),
+      os.path.expandvars(dict_deep_get(self.output_spec, ('path',))),
       self.OUTPUT_DIR_TEMPLATE.format(**self.metadata)
     )
 
@@ -58,14 +58,18 @@ class TranscoderBase(object):
 
   def _getFfmpegBinary(self):
     try:
-      return dict_deep_get(self.config, ('binaries', 'ffmpeg'))
+      return os.path.expandvars(
+        dict_deep_get(self.config, ('binaries', 'ffmpeg'))
+      )
     except KeyError:
       return shutil.which('ffmpeg')
 
 
   def _getR128gainBinary(self):
     try:
-      return dict_deep_get(self.config, ('binaries', 'r128gain'))
+      return os.path.expandvars(
+        dict_deep_get(self.config, ('binaries', 'r128gain'))
+      )
     except KeyError:
       return shutil.which('r128gain')
 
