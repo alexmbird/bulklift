@@ -1,0 +1,37 @@
+config:
+
+  # If unspecified Bulklift will search $PATH
+  binaries: {}
+    # ffmpeg: /usr/bin/ffmpeg
+    # r128gain: /usr/local/bin/r128gain
+
+
+
+
+##
+# Override these in individual albums, adding at least 'enabled' to switch on
+# for the outputs you want.
+##
+
+outputs:
+
+  # Opus performs a lot better than mp3.  Most modern devices support it.
+  phone:
+    path: ${HOME}/bulklift_targets/phone
+    codec: opus
+    opus_bitrate: 128k
+    permissions:
+      user: mock
+      group: mock
+      file_mode: "0664"
+      dir_mode: "0775"
+
+  # "The player is small, square and fits neatly in your hand, a little like a
+  # large pager".
+  creative_muvo_2:
+    path: ${HOME}/bulklift_targets/creative_muvo_2
+    codec: lame
+    lame_vbr: 3
+    permissions:
+      file_mode: "0664"
+      dir_mode: "0775"

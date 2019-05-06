@@ -1,0 +1,11 @@
+metadata:
+  album: 90 Minutes of Bleep-Bloop Noises
+  year: 2017
+
+outputs:
+  phone:
+    enabled: true
+    opus_bitrate: 96k
+  creative_muvo_2:
+    enabled: true
+    lame_vbr: 4
