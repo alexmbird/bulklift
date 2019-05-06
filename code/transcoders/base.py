@@ -53,16 +53,12 @@ class TranscoderBase(object):
 
   def makeOutputDir(self):
     """ Make the output dir we'll be transcoding content into """
-    os.makedirs(self.output_dir_name, self.output_dir_mode, exist_ok=False)
+    os.makedirs(self.output_dir_name, self.output_dir_mode, exist_ok=True)
 
 
   def transcode(self):
     """ Create the appropriate version of the content """
-    try:
-      self.makeOutputDir()
-    except OSError:
-      puts("Target dir already exists; skipping")
-      return
+    self.makeOutputDir()
     self.copyPreservedFiles()
     self.transcodeMediaFiles()
     self.r128gain()
