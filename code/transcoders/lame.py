@@ -24,7 +24,8 @@ class TranscoderLame(TranscoderBase):
       self.ffmpeg_path,
       '-y', '-loglevel', 'error',
       '-i', source_path,
-      '-c:v', 'copy',
+      # '-c:v', 'copy',
+      '-vn',  # strip video (probably one frame of albumart) - confuses r128gain
       '-codec:a', 'libmp3lame',
       '-q:a', str(self.lame_vbr),
       '-map_metadata', '0',

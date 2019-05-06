@@ -24,7 +24,8 @@ class TranscoderOpus(TranscoderBase):
       self.ffmpeg_path,
       '-y', '-loglevel', 'error',
       '-i', source_path,
-      '-c:v', 'copy',
+      # '-c:v', 'copy',
+      '-vn',  # strip video (probably one frame of albumart) - confuses r128gain
       '-codec:a', 'libopus',
       '-compression_level', '10', # Slowest encode, highest quality
       '-vbr', 'on',
