@@ -26,6 +26,11 @@ outputs:
       file_mode: "0664"
       dir_mode: "0775"
 
+    # Replaygain album tagging is on by default; set false for specific dirs
+    # if they shouldn't have a whole-album loudness tag.
+    # gain:
+    #   album: false
+
   # "The player is small, square and fits neatly in your hand, a little like a
   # large pager".
   creative_muvo_2:
