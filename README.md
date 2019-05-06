@@ -109,6 +109,11 @@ The following codecs can be specified for targets:
 | `copy`  | -  | - | - | Copies audio from the source without transcoding.  Output will be the exact same bitrate and format as input.  Use this if you don't have a lossless copy of the original and don't want to further reduce its quality.  |
 
 
+## Tips & Tricks
+
+-   Codecs shipped with LTS Linux distributions are often out of date.  For ones at a mature point in their lifecycle that isn't a problem; for those still getting regular improvements (e.g. libopus) it is.  To help Bulklift utilise the latest & greatest codecs you may want to build your own ffmpeg binary.  My notes for doing this on Debian are [notes/ffmpeg.md](here).
+
+
 ## Why?
 Originally I'd rip CD's into mp3 - but now disk space is cheap and audio players are good so I've switched to lossless.
 
