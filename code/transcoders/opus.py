@@ -35,3 +35,11 @@ class TranscoderOpus(TranscoderBase):
       '-metadata', 'comment={}'.format(self.COMMENT),
       target_path
     ]
+
+
+  def __str__(self):
+    return "<{} writing to '{}' br:{}>".format(
+      self.__class__.__name__,
+      self.output_path,
+      self.opus_bitrate
+    )
