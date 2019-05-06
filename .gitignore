@@ -102,3 +102,9 @@ venv.bak/
 
 # mypy
 .mypy_cache/
+
+# Sublimetext project
+*.sublime-*
+
+# Symlink to test tree's root config
+/_test_tree
