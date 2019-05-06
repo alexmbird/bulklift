@@ -67,7 +67,12 @@ class TranscoderBase(object):
 
   def copyPreservedFiles(self):
     """ Copy static content (e.g. album art) into the output dir """
-    files_copy = [d.name for d in os.scandir(self.source.path) if d.is_file() and file_ext_match(self.PRESERVE_TYPES, d.name)]
+    files_copy = [
+      d.name for d in os.scandir(self.source.path)
+      if d.is_file()
+        and file_ext_match(self.PRESERVE_TYPES, d.name)
+        and not d.name.startswith('.')
+    ]
     for name in files_copy:
       source_path = os.path.join(self.source.path, name)
       target_path = os.path.join(self.output_dir_name, name)
@@ -77,7 +82,12 @@ class TranscoderBase(object):
 
 
   def transcodeMediaFiles(self):
-    files_transcode = [d.name for d in os.scandir(self.source.path) if d.is_file() and file_ext_match(self.TRANSCODE_TYPES, d.name)]
+    files_transcode = [
+      d.name for d in os.scandir(self.source.path)
+      if d.is_file()
+        and file_ext_match(self.TRANSCODE_TYPES, d.name)
+        and not d.name.startswith('.')
+    ]
     cmds = [self.buildTranscodeCmd(name) for name in files_transcode]
     run = lambda cmd: subprocess.run(cmd, check=True)
     with ThreadPool(processes=os.cpu_count()) as pool:

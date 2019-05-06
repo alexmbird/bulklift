@@ -4,7 +4,7 @@ It is the year 2019.  Most of humanity has switched to streaming their music fro
 
 Fellow rebels - I bring you **Bulklift**, a simple tool to ease your burden.
 
-Bulklift will walk a tree of source audio (arranged into albums), look for `.bulklift.yaml` files and follow the directions within to transcode selected albums into the output trees you want.  If there's no `.bulklift.yaml` in a directory it'll simply be ignored.
+Bulklift will walk a tree of source audio (arranged into albums), look for `.bulklift.yaml` files and follow the directions within to transcode selected albums with [ffmpeg](http://ffmpeg.org/).  If there's no `.bulklift.yaml` in a directory it'll simply be ignored.
 
 Features:
 
@@ -26,6 +26,7 @@ It only cares about filenames insomuch that the transcoder writes output files w
 ```plain
 $ python3 -m venv venv
 $ . venv/bin/activate      # or variant for your shell
+$ pip3 install wheel
 $ pip3 install -r requirements.txt
 ```
 TBD: release binaries compiled with [PyInstaller](http://www.pyinstaller.org/), packages on [PyPi](https://pypi.org/).
