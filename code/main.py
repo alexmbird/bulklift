@@ -15,7 +15,7 @@ MIN_PYTHON_VERSION = (3,5,3)
 
 
 
-def cmd_bake(args):
+def cmd_transcode(args):
   tree_root = MediaSourceDir(Path(args.source_tree_root[0]), parent=None)
   tree_root.walk()
 
@@ -60,9 +60,9 @@ sp_test.set_defaults(func=cmd_test)
 sp_test.add_argument('source_tree_root', type=str, nargs=1,
                      help="root path for your source tree; must contain a .bulklift.yaml with root=true")
 
-sp_bake = subparsers.add_parser('bake', help="bake output trees")
-sp_bake.set_defaults(func=cmd_bake)
-sp_bake.add_argument('source_tree_root', type=str, nargs=1,
+sp_tc = subparsers.add_parser('transcode', help="transcode audio to output trees")
+sp_tc.set_defaults(func=cmd_transcode)
+sp_tc.add_argument('source_tree_root', type=str, nargs=1,
                      help="root path for your source tree; must contain a .bulklift.yaml with root=true")
 
 sp_edit = subparsers.add_parser('edit', help="create/edit a .bulklift.yml manifest")

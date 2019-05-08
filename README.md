@@ -39,9 +39,14 @@ TBD: release binaries compiled with [PyInstaller](http://www.pyinstaller.org/), 
 $ python3 -m unittest discover code/
 ```
 
-## Running
+## Usage
 ```plain
-$ ./code/bulklift bake /path/to/my/source_tree
+source_tree > $ echo 'root: true' > .bulklift.yaml  # first declare your root
+source_tree > $ bulklift edit                       # add other root config
+source_tree > $ cd "Lady Gaga/Born This Way"
+Born This Way > $ bulklift edit                     # add metadata; enable encoding
+Born This Way > $ cd ..
+source_tree > $ bulklift transcode .                # transcode any new targets
 ```
 
 ## Common Operations
