@@ -1,27 +1,28 @@
 # Bulklift: A Bulk Transcoding Tool for Large Music Collections
 
-It is the year 2019.  Most of humanity has switched to streaming their music from an entity known as "The Cloud".  Only a brave group of rebels holds out, clinging valiantly to their own music libraries but slowly losing the fight to manage them across multiple devices.
+It is the year 2019.  Most of humanity has switched to streaming their music from an entity known as "The Cloud".  A brave group of rebels hold out, clinging valiantly to their own music libraries but struggling ever harder to sync them across multiple devices.
 
-Fellow rebels - I bring you **Bulklift**, a tool to ease your burden.
+Rebels - I bring you a tool to ease your burden.  **Bulklift**.
 
-Bulklift walks a tree of audio (arranged into albums) looking for `.bulklift.yaml` manifests.  It follows the instructions within (merged with those of parent directories) to transcode the contents.
+Bulklift walks your music library looking for `.bulklift.yaml` manifests.  It follows the instructions within to transcode any music that's in the same directory.
 
 Features:
 
 -  [ffmpeg](http://ffmpeg.org/) for transcoding
 -  Generate multiple collections of output audio from a single source tree
--  Automatically add [replaygain](https://en.wikipedia.org/wiki/ReplayGain) tags to output files (presently using the excellent [r128gain](https://github.com/desbma/r128gain))
--  Inheritable, per-directory config system makes specifying settings a breeze
--  Toggle the output tree(s) a source album will be transcoded to.  Want 70s hair metal on your phone but not your laptop?  No problemo.
+-  Automatically add [replaygain](https://en.wikipedia.org/wiki/ReplayGain) tags to output files using the excellent [r128gain](https://github.com/desbma/r128gain)
+-  Inheritable, per-directory config system makes it a breeze to setup
+-  Manifests are just text files stored alongside your music; no database to corrupt or lose
+-  Toggle the output tree(s) a source album will be transcoded to.  Want only half of Lady Gaga's albums on your phone?  With each at a different bitrate?  Done.
 -  Copies album art (gif, png, jpg) unmolested to the output directory
--  Passthrough `copy` output format to get music onto your flac player
--  Multithreading (4x faster on my Raspberry Pi media server!)
+-  Passthrough `copy` format to copy files without re-encoding
+-  Multithreading (4x faster on my Raspberry Pi media server)
 
 Bulklift has approximately zero bells and whistles.  It doesn't try to be clever and decisions about metadata are left to the user.  It won't download misspellings of your favourite artist's name from CDDB and won't force strange genres from other people's tags upon your filesystem.  Never again will Taylor Swift darken your goth folder.
 
-Bulklift is opinionated about the directory structure in which you store your music.  One album, one directory, one `.bulklift.yaml` with other settings inherited from directories above.  It doesn't care about directory names or how many levels there are in your directory tree above the album.
+Bulklift is opinionated about the directory structure you keep your music in.  One album, one directory, one `.bulklift.yaml` with other settings inherited from directories above.  It doesn't care about directory names or how many levels there are in your directory tree above the album.
 
-It only cares about filenames insomuch that the transcoder writes output files with the same name but a modified extension.
+Filenames are simply reused, but with the extension changed to match the output format.
 
 
 ## Building
@@ -51,16 +52,16 @@ source_tree > $ bulklift transcode .                # transcode any new targets
 
 ## Common Operations
 
--   **Regenerate an album** (e.g. if your encoder has improved) - delete the directory from your output tree(s) and run bulklift again.
+-   **Regenerate an album** (e.g. if your encoder has improved) - delete the directory from your output tree(s) and run `bulklift transcode` again.
 -   **Edit a manifest** - `bulklift edit [path to dir]`.  Default is the current directory.  If no `.bulklift.yaml` exists Bulklift will intelligently generate a template based on the directory's contents and the manifests of its ancestors.
 
 
 ## Configuration
 Yaml, nothing more.
 
-The power of bulklift comes from its inheritable manifest system.  At every level in your source tree you can create a `.bulklift.yaml` manifest overriding options from the previous.
+The power of bulklift comes from its inheritable manifest system.  At any level in your source tree you can create a `.bulklift.yaml` manifest overriding options from the previous.
 
-Let's demonstrate with an example.  My source tree looks like this:
+Let's demonstrate with an example.  My source music library looks like this:
 
 ```plain
 .
@@ -86,12 +87,12 @@ Let's demonstrate with an example.  My source tree looks like this:
 
 ```
 
-1.  At the top level set global config options (e.g. path to ffmpeg) and declare target trees with their default bitrates and formats.  This must have `root: true` so Bulklift knows where to stop when loading in config from subdirectories.
+1.  At the top level set global config options (e.g. path to ffmpeg) and declare target trees with their default bitrates and formats.  This must contain `root: true` so Bulklift knows where to stop when loading manifests from subdirectories deep in your tree.
 2.   At an intermediate level (`__AMBIENT`) a second `.bulklift.yaml` manifest specifying metadata for the genre (`genre: Ambient`).
 3.   At the artist level, a third `.bulklift.yaml` specifying metadata for the artist (`artist: Super Xylophone Man`)
 4.   At the bottom level (the individual album) switch encoding on (`enabled: true`) for one or more targets and add metadata tags for the name and year of the album (`album: Greatest Hits` / `year: 2018`).
 
-The key concept is that Bulklift merges the the manifest of any directory with that of its parents.  The tip of the tree has precendence so you can override settings you set earlier.  Want to use a different build of ffmpeg for transcoding Dubstep?  Override the artiest for one specific collaboration album?  The world is your oyster.
+The key concept is that Bulklift merges the the manifest of any directory with those of its parents.  The deepest manifest (i.e. the one in the dir with your music) has precendence so you can override settings from parent directories.  Want to use a different build of ffmpeg to transcode your Dubstep collection?  Override the artist for one particular collaboration album?  The world is your oyster.
 
 Some of the more common options...
 
@@ -103,6 +104,9 @@ Some of the more common options...
 | `outputs`  | -        | `{}`    | Map of outputs BL _may_ transcode to.  While typically (but not necessarily) defined in your root manifest they only take effect for albums in which their `enabled` flag is set to `true`. |
 | `outputs.<name>.enabled` | - | `true` | Toggle transcoding for a given output.  Default is `false` and in the normal use case you'll set it to `true` for any album you want in a given target.  You could also set it `true` in the root manifest (to transcode absolutely everything for a given target) or at an intermediate level (i.e. "give me everything for this specific artist"). |
 | `outputs.<name>.codec`| Y | `copy`, `opus` | Codec to use when transcoding objects described by this manifest.  Typically you'll set this once when defining the output.  However you may want to override it in some cases, e.g. to copy mp3 audio rather than re-transcoding it to opus. |
+| `outputs.<name>.opus_bitrate`| - | `128k` | Bitrate to use for libopus.  Encoding is VBR so results are approximate. |
+| `outputs.<name>.lame_vbr`| - | `3` | VBR setting for libmp3lame.  Encoding is VBR so results are approximate. |
+| `metadata.*`| Y | - | Mapping of metadata to use for the content.  To avoid repetition you can build this up level by level - see the [examples](examples/) for how. |
 
 Bulklift will interpolate environment variables used within paths, e.g. `${HOME}/media/target_devices/mp3_player`.
 
@@ -127,29 +131,31 @@ The following codecs can be specified for targets:
 
 | Label   | Format  | Codec  | Recommended quality | Notes  |
 |---------|---------|--------|---------------------|--------|
-| `opus`  | [opus](https://en.wikipedia.org/wiki/Opus_%28audio_format%29) | libopus  | 96k (electronic); 112k (other)  | A modern codec with better performance than mp3.  Supported by Android, VLC and most modern player software.  Definitely not supported by your shonky old mp3 player. |
+| `opus`  | [opus](https://en.wikipedia.org/wiki/Opus_%28audio_format%29) | libopus  | 96k (electronic); 112k (other)  | A modern codec with better performance than mp3.  Supported by Android, VLC and most modern player software.  Definitely not supported by your shonky old mp3 player.  Always used in VBR mode.  |
 | `lame`  | [mp3](https://en.wikipedia.org/wiki/MP3)  | libmp3lame  | 3 (electronic); 2 (other)  | The [lame](http://lame.sourceforge.net/) encoder producting the venerable mp3 format.  Quality levels are for VBR; see their [docs](http://lame.sourceforge.net/vbr.php). |
-| `copy`  | -  | - | - | Copies audio from the source without transcoding.  Output will be the exact same bitrate and format as input.  Use this if you don't have a lossless copy of the original and don't want to further reduce its quality.  |
+| `copy`  | -  | - | - | Copies audio from the source without transcoding.  Output will be the exact same bitrate and format as input.  Content is still run through ffmpeg so we retain the potential to change metadata.  Use this if you don't have a lossless copy of the original and don't want to further reduce its quality.  |
 
 
 ## Tips & Tricks
 
--   Codecs shipped with LTS Linux distributions are often out of date.  For ones at a mature point in their lifecycle that isn't a problem; for those still getting regular improvements (e.g. libopus) it is.  To help Bulklift utilise the latest & greatest codecs you may want to build your own ffmpeg binary.  My notes for doing this on Debian are [notes/ffmpeg.md](here).  Or you could use one of [these](https://johnvansickle.com/ffmpeg/) static builds.
+-   Codecs shipped with LTS Linux distributions are often out of date.  For those still rapidly improving (e.g. libopus) this is a problem.  To transcode with the latest & greatest codecs you may wish to build your own ffmpeg binary.  My notes for doing this on Debian are [notes/ffmpeg.md](here).  Alternatively you might use one of [these](https://johnvansickle.com/ffmpeg/) static builds.
 
 
 ## Why?
-Originally I'd rip CD's into mp3 - but now disk space is cheap and audio players are good so I've switched to lossless.
+Originally I'd rip CD's into mp3.  Nowadays disk space is cheap and audio players are good so I've switched to lossless.
 
-Trouble is, not everything has the space for lossless audio.  Those FLACs need to get converted into other formats to fit on devices.  The opus codec is fantastic but converting albums one at a time with a hacked-together bash script took forever.  And oh boy, next time we all switch to a magical new codec I'll have to do the lot again.  Not fun.
+Trouble is, not everything has the space (or even support) for lossless audio.  Those FLACs need transcoding into other formats to fit on devices.  With a handful of devices - each with different space and codec requirements - I found myself spending more time transcoding music than listening to it.  Not fun.
 
-So I bowed to the inevitable and admitted I need a tool to (re)transcode lossless media into target trees.  There are plenty of library management apps about, but all of them embody someone else's idea of how to arrange a music library.  I've never come across one that suits my tastes.
+Time to automate the process.  There are plenty of library management apps already, but all of them embody someone else's idea of how to arrange a music library.
 
 I value:
 
 -   Simplicity.  It should be easy to understand, easy to extend for new formats and easy to fix when something goes wrong.
+-   Robustness.  Hard to break, easy to fix when it does.
 -   Transparency.  Metadata & settings should be editable with any text editor and stored alongside the music they refer to.
--   Configurability.  I need a way to tweak bitrates & formats for parts of my library (e.g. per genre) without having to manually specify them for each album.
--   Machine write-ability.  Presently I write my `.bulklift.yaml` files in vim but in future I may want to update them with some automated tool.
+-   Configurability.  I want to tweak bitrates & formats for parts of my library (e.g. per genre) without having to manually specify them for each album.
+-   Machine write-ability.  Presently I write my `.bulklift.yaml` manifests with vim, but in future I may write CLI tools for bulk-editing the config.
+-   But most of all - never, ever having to do this job again.
 
 
 ## License / Contributing
