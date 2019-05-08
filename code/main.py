@@ -11,7 +11,7 @@ from source import MediaSourceDir
 from manifest import Manifest
 
 
-MIN_PYTHON_VERSION = (3,6)
+MIN_PYTHON_VERSION = (3,5,3)
 
 
 
