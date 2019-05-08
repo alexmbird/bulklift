@@ -102,7 +102,7 @@ class TranscoderBase(object):
       self.setOutputPermissions()
     except Exception:
       puts(colored.red("Transcoding failed; unlinking output path"))
-      shutil.rmtree(self.output_album_path, ignore_errors=True)
+      shutil.rmtree(str(self.output_album_path.resolve()), ignore_errors=True)
       raise
 
 
@@ -114,11 +114,11 @@ class TranscoderBase(object):
         and p.suffix in PRESERVE_TYPES
         and not p.name.startswith('.')
     ]
-    for p in files_copy:
-      puts("Copying '{}'".format(p.name))
-      path_dst = self.output_album_path / p.name
+    for path_src in files_copy:
+      path_dst = self.output_album_path / path_src.name
+      puts("Copying '{}' -> '{}'".format(path_src.resolve(), path_dst.resolve()))
       shutil.copy(
-        str(p.resolve()),
+        str(path_src.resolve()),
         str(path_dst.resolve())
       )
 
