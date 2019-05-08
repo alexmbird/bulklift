@@ -6,7 +6,7 @@ from manifest import Manifest
 from transcoders import TRANSCODERS
 
 
-class MediaSourceNode(object):
+class MediaSourceDir(object):
 
   def __init__(self, path, parent):
     self.parent = parent
@@ -15,7 +15,7 @@ class MediaSourceNode(object):
 
 
   def walk(self):
-    subnodes = [MediaSourceNode(p, self) for p in self.path.iterdir() if p.is_dir()]
+    subnodes = [MediaSourceDir(p, self) for p in self.path.iterdir() if p.is_dir()]
     for node in subnodes:
       node.doTranscoding()
       node.walk()

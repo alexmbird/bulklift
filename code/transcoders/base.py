@@ -9,14 +9,14 @@ from clint.textui import indent, puts, colored
 from util import file_ext_match, dict_deep_get
 
 
+# Filetypes that can be transcoded
+TRANSCODE_TYPES = ('.flac', '.mp3', '.m4a', '.opus')
+
+# Filetypes that will be directly copied - typically album art
+PRESERVE_TYPES = ('.gif', '.jpg', '.jpeg', '.png')
+
+
 class TranscoderBase(object):
-
-  # Filetypes that will be transcoded into the output format
-  TRANSCODE_TYPES = ('.flac', '.mp3', '.m4a', '.opus')
-
-  # Filetypes that will be directly copied - typically album art
-  PRESERVE_TYPES = ('.gif', '.jpg', '.jpeg', '.png')
-
 
   OUTPUT_DIR_TEMPLATE = "{genre}/{artist}/{year} {album}"
   FILE_EXTENSION = 'test'
@@ -109,7 +109,7 @@ class TranscoderBase(object):
     files_copy = [
       d.name for d in os.scandir(self.source.path)
       if d.is_file()
-        and file_ext_match(self.PRESERVE_TYPES, d.name)
+        and file_ext_match(PRESERVE_TYPES, d.name)
         and not d.name.startswith('.')
     ]
     for name in files_copy:
@@ -123,7 +123,7 @@ class TranscoderBase(object):
     files_transcode = [
       d.name for d in os.scandir(self.source.path)
       if d.is_file()
-        and file_ext_match(self.TRANSCODE_TYPES, d.name)
+        and file_ext_match(TRANSCODE_TYPES, d.name)
         and not d.name.startswith('.')
     ]
     with ThreadPoolExecutor(max_workers=self.thread_count) as pool:

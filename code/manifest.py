@@ -3,6 +3,7 @@ from copy import deepcopy
 from pathlib import Path
 
 from util import dict_deep_merge
+from transcoders import TRANSCODE_TYPES
 
 
 
@@ -28,6 +29,11 @@ class Manifest(dict):
 
     super(Manifest, self).__init__(mapping, **kwargs)
     self.path = path
+
+
+  @classmethod
+  def manifest_file_name(cls, path):
+    return path / cls.MANIFEST_FILE_NAME
 
 
   @classmethod
@@ -57,6 +63,49 @@ class Manifest(dict):
         manifest = Manifest(path, new)
       cls.MANIFEST_CACHE[path] = manifest
       return manifest
+
+
+  def is_music_dir(self):
+    """ Return True if this path contains any supported media types """
+    for p in self.path.iterdir():
+      if p.suffix in TRANSCODE_TYPES:
+        return True
+    return False
+
+
+  def dumpTemplate(self):
+    """ Try to infer the directory level we're on and produce an appropriate
+        yaml template for the user to edit """
+    if self.is_root():
+      d = dict(self)
+    elif self.is_music_dir():
+      d = self.genTemplateForAlbum()
+    else:
+      d = self.genTemplateForArtist()
+    return yaml.safe_dump(d)
+
+
+  def genTemplateForArtist(self):
+    """ Dump yaml suitable to be used as a template for an artist manifest """
+    d = {k: v for k, v in self.items() if k in ['metadata']}
+    m = d.setdefault('metadata', {})
+    m.setdefault('genre', '')
+    m.setdefault('artist', '')
+    return d
+
+
+  def genTemplateForAlbum(self):
+    """ Dump yaml suitable to be used as a template for an album manifest """
+    d = self.genTemplateForArtist()
+    m = d.setdefault('metadata', {})
+    m.setdefault('album', '')
+    m.setdefault('year', '')
+    unmasked = ['enabled', 'codec', 'lame_vbr', 'opus_bitrate']
+    # print("outputs is {}".format(self['outputs']))
+    def _clean(spec):
+      return {k:v for k,v in spec.items() if k in unmasked}
+    d['outputs'] = {o_name: _clean(o_spec) for o_name, o_spec in self['outputs'].items()}
+    return d
 
 
   def is_root(self):

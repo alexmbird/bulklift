@@ -2,12 +2,13 @@
 
 It is the year 2019.  Most of humanity has switched to streaming their music from an entity known as "The Cloud".  Only a brave group of rebels holds out, clinging valiantly to their own music libraries but slowly losing the fight to manage them across multiple devices.
 
-Fellow rebels - I bring you **Bulklift**, a simple tool to ease your burden.
+Fellow rebels - I bring you **Bulklift**, a tool to ease your burden.
 
-Bulklift will walk a tree of source audio (arranged into albums), look for `.bulklift.yaml` files and follow the directions within to transcode selected albums with [ffmpeg](http://ffmpeg.org/).  If there's no `.bulklift.yaml` in a directory it'll simply be ignored.
+Bulklift walks a tree of audio (arranged into albums) looking for `.bulklift.yaml` manifests.  It follows the instructions within (merged with those of parent directories) to transcode the contents.
 
 Features:
 
+-  [ffmpeg](http://ffmpeg.org/) for transcoding
 -  Generate multiple collections of output audio from a single source tree
 -  Automatically add [replaygain](https://en.wikipedia.org/wiki/ReplayGain) tags to output files (presently using the excellent [r128gain](https://github.com/desbma/r128gain))
 -  Inheritable, per-directory config system makes specifying settings a breeze
@@ -40,18 +41,21 @@ $ python3 -m unittest discover code/
 
 ## Running
 ```plain
-$ ./code/bulklift /path/to/my/source_tree
+$ ./code/bulklift bake /path/to/my/source_tree
 ```
 
 ## Common Operations
 
--   Regenerate an album (e.g. if your encoder has improved) - delete the directory from your output tree(s) and run bulklift again.
+-   **Regenerate an album** (e.g. if your encoder has improved) - delete the directory from your output tree(s) and run bulklift again.
+-   **Edit a manifest** - `bulklift edit [path to dir]`.  Default is the current directory.  If no `.bulklift.yaml` exists Bulklift will intelligently select a template based on the directory's contents and parent manifests.
 
 
 ## Configuration
 Yaml, nothing more.
 
-Easiest to explain with an example.  My library looks like this:
+The power of bulklift comes from its inheritable manifest system.  At every level in your source tree you can create a `.bulklift.yaml` manifest overriding options from the previous.
+
+Let's demonstrate with an example.  My source tree looks like this:
 
 ```plain
 .
@@ -77,14 +81,25 @@ Easiest to explain with an example.  My library looks like this:
 
 ```
 
-The power of bulklift comes from its inheritable configuration system.  At every level in your source tree you can create a `.bulklift.yaml` overriding options from the previous.  In this case we:
+1.  At the top level set global config options (e.g. path to ffmpeg) and declare target trees with their default bitrates and formats.  This must have `root: true` so Bulklift knows where to stop when loading in config from subdirectories.
+2.   At an intermediate level (`__AMBIENT`) a second `.bulklift.yaml` manifest specifying metadata for the genre (`genre: Ambient`).
+3.   At the artist level, a third `.bulklift.yaml` specifying metadata for the artist (`artist: Super Xylophone Man`)
+4.   At the bottom level (the individual album) switch encoding on (`enabled: true`) for one or more targets and add metadata tags for the name and year of the album (`album: Greatest Hits` / `year: 2018`).
 
--   At the top level set global config options (e.g. path to ffmpeg) and declare your target trees with default bitrates and formats for each.
--   At an intermediate level (`__AMBIENT`) a second `.bulklift.yaml` specifying metadata for the genre (`genre: Ambient`).
--   At the artist level, a third `.bulklift.yaml` specifying metadata for the artist (`artist: Super Xylophone Man`)
--   At the bottom level (the individual album) switch encoding on (`enabled: true`) for one or more targets and add metadata tags for the name and year of the album (`album: Greatest Hits` / `year: 2018`).
+The key concept is that Bulklift merges the the manifest of any directory with that of its parents.  The tip of the tree has precendence so you can override settings you set earlier.  Want to use a different build of ffmpeg for transcoding Dubstep?  Override the artiest for one specific collaboration album?  The world is your oyster.
 
-The key concept is that Bulklift merges the config of a directory with that of its parents.  The tip of the tree has precendence so you can override settings you set earlier.  Want to use a different build of ffmpeg for transcoding Dubstep?  Knock yourself out.
+Some of the more common options...
+
+| Key        | Required | Example | Meaning |
+|------------|----------|---------|---------------------|
+| `root`     | Y        | `true`  | Signifies the root directory of your source tree.  Bulklift won't search for any manifests above this.  Must be present **only** in the root manifest; anywhere else and BL will get confused.  |
+| `config.binaries.ffmpeg` | - | `${HOME}/.local/bin/ffmpeg` | Ffmpeg binary to use.  Often this is of value when you want to transcode with a more recent build than the one shipped with your OS.  Default is to search your path. |
+| `config.binaries.r128gain` | - | `${HOME}/.local/bin/r128gain` | [r128gain](https://github.com/desbma/r128gain) binary to use.  Default is to search your path. |
+| `outputs`  | -        | `{}`    | Map of outputs BL _may_ transcode to.  While typically (but not necessarily) defined in your root manifest they only take effect for albums in which their `enabled` flag is set to `true`. |
+| `outputs.<name>.enabled` | - | `true` | Toggle transcoding for a given output.  Default is `false` and in the normal use case you'll set it to `true` for any album you want in a given target.  You could also set it `true` in the root manifest (to transcode absolutely everything for a given target) or at an intermediate level (i.e. "give me everything for this specific artist"). |
+| `outputs.<name>.codec`| Y | `copy`, `opus` | Codec to use when transcoding objects described by this manifest.  Typically you'll set this once when defining the output.  However you may want to override it in some cases, e.g. to copy mp3 audio rather than re-transcoding it to opus. |
+
+Bulklift will interpolate environment variables used within paths, e.g. `${HOME}/media/target_devices/mp3_player`.
 
 Examples showing use of the config tree are shown in [examples](examples/).
 
@@ -92,9 +107,7 @@ Examples showing use of the config tree are shown in [examples](examples/).
 ## File Naming
 Output filenames are copied from the source with the extension changed.
 
-Output directories are a little more complex.  I didn't want to rely on the source directory name (mine contain metadata about the format) so the output dir name is freshly generated from the metadata.  It defaults to `__{genre}/{artist}/{year} {album}/`.
-
-If you don't like my naming scheme you can override it in each target's config.
+Output directories are a little more complex.  I didn't want to rely on the source directory name (mine contain metadata about the format) so the output dir name is freshly generated from the metadata.  It defaults to `{genre}/{artist}/{year} {album}/`.
 
 
 
