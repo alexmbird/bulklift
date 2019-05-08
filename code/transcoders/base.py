@@ -4,6 +4,7 @@ from pathlib import Path
 import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import math
 
 from clint.textui import indent, puts, colored
 
@@ -146,13 +147,16 @@ class TranscoderBase(object):
 
   def r128gain(self):
     """ Run the r128gain tool over the completed output dir """
+    # r128gain doesn't use all the CPU, so up its thread count
+    r128_t_count = math.ceil(self.thread_count * 1.5)
     cmd = [
       self.r128gain_path,
       '--ffmpeg-path', self.ffmpeg_path,
       '--opus-output-gain',
+      '--thread-count', str(r128_t_count),
       '--recursive',
       '--verbosity', 'warning',
-      self.output_album_path
+      str(self.output_album_path)
     ]
     if self.r128gain_album:
       cmd.insert(1, '--album-gain')
