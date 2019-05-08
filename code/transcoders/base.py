@@ -172,7 +172,7 @@ class TranscoderBase(object):
     """ Set desired perms / ownership on output dir and its contents """
     self.output_album_path.chmod(self.output_dir_mode)
     if self.output_user or self.output_group:
-      shutil.chown(self.output_album_path, user=self.output_user, group=self.output_group)
+      shutil.chown(str(self.output_album_path), user=self.output_user, group=self.output_group)
     for p in self.output_album_path.iterdir():
       p.chmod(self.output_file_mode)
       if self.output_user or self.output_group:
