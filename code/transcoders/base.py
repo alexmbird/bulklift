@@ -88,10 +88,15 @@ class TranscoderBase(object):
     except OSError:
       puts("Dest dir '{}' already exists; skipping".format(self.output_album_dir))
       return
-    self.copyPreservedFiles()
-    self.transcodeMediaFiles()
-    self.r128gain()
-    self.setOutputPermissions()
+    try:
+      self.copyPreservedFiles()
+      self.transcodeMediaFiles()
+      self.r128gain()
+      self.setOutputPermissions()
+    except Exception:
+      puts(colored.red("Unlinking output path"))
+      os.unlink(self.output_album_dir)
+      raise
 
 
   def copyPreservedFiles(self):

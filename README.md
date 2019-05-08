@@ -33,6 +33,11 @@ $ pip3 install -r requirements.txt
 TBD: release binaries compiled with [PyInstaller](http://www.pyinstaller.org/), packages on [PyPi](https://pypi.org/).
 
 
+## Testing
+```plain
+$ python3 -m unittest discover code/
+```
+
 ## Running
 ```plain
 $ ./code/bulklift /path/to/my/source_tree
@@ -111,7 +116,7 @@ The following codecs can be specified for targets:
 
 ## Tips & Tricks
 
--   Codecs shipped with LTS Linux distributions are often out of date.  For ones at a mature point in their lifecycle that isn't a problem; for those still getting regular improvements (e.g. libopus) it is.  To help Bulklift utilise the latest & greatest codecs you may want to build your own ffmpeg binary.  My notes for doing this on Debian are [notes/ffmpeg.md](here).
+-   Codecs shipped with LTS Linux distributions are often out of date.  For ones at a mature point in their lifecycle that isn't a problem; for those still getting regular improvements (e.g. libopus) it is.  To help Bulklift utilise the latest & greatest codecs you may want to build your own ffmpeg binary.  My notes for doing this on Debian are [notes/ffmpeg.md](here).  Or you could use one of [these](https://johnvansickle.com/ffmpeg/) static builds.
 
 
 ## Why?

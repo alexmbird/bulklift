@@ -1,3 +1,10 @@
+##
+# This must occur ONLY at the root of your source tree.  Bulklift uses this to
+# detect the root when recursively loading manifests.
+##
+root: true
+
+
 config:
 
   # If unspecified Bulklift will search $PATH
