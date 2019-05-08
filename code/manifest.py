@@ -47,7 +47,7 @@ class Manifest(dict):
       return cls.MANIFEST_CACHE[path]
     except KeyError:
       try:
-        with open(path / cls.MANIFEST_FILE_NAME, 'r') as stream:
+        with self.manifest_file_name(self.path).open('r') as stream:
           data = yaml.safe_load(stream)
       except FileNotFoundError:
         data = {}

@@ -47,7 +47,7 @@ $ ./code/bulklift bake /path/to/my/source_tree
 ## Common Operations
 
 -   **Regenerate an album** (e.g. if your encoder has improved) - delete the directory from your output tree(s) and run bulklift again.
--   **Edit a manifest** - `bulklift edit [path to dir]`.  Default is the current directory.  If no `.bulklift.yaml` exists Bulklift will intelligently select a template based on the directory's contents and parent manifests.
+-   **Edit a manifest** - `bulklift edit [path to dir]`.  Default is the current directory.  If no `.bulklift.yaml` exists Bulklift will intelligently generate a template based on the directory's contents and the manifests of its ancestors.
 
 
 ## Configuration

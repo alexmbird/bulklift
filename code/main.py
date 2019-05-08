@@ -30,7 +30,7 @@ def cmd_edit(args):
   manifest_path = Manifest.manifest_file_name(abspath)
   if not manifest_path.exists():
     manifest = Manifest.load(abspath)
-    with open(manifest_path, 'w') as stream:
+    with manifest_path.open('w') as stream:
       stream.write(manifest.dumpTemplate())
   subprocess.run([
     os.environ.get('EDITOR', shutil.which('nano')),
