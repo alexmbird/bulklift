@@ -128,7 +128,8 @@ class TranscoderBase(object):
     ]
     with ThreadPoolExecutor(max_workers=self.thread_count) as pool:
       futures = [pool.submit(subprocess.run, self.buildTranscodeCmd(f)) for f in files_transcode]
-      for cp in as_completed(futures):
+      for future in as_completed(futures):
+        cp = future.result()
         head, tail = os.path.split(cp.args[-1])
         if cp.returncode == 0:
           puts("Transcoded '{}'".format(tail))
