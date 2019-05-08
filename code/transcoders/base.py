@@ -2,7 +2,7 @@ import os
 import os.path
 import shutil
 import subprocess
-from multiprocessing.pool import ThreadPool
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from clint.textui import indent, puts, colored
 
@@ -28,6 +28,11 @@ class TranscoderBase(object):
     self.metadata = metadata
     self.output_spec = output_spec
     self.config = config
+
+    try:
+      self.thread_count = len(os.sched_getaffinity(0))
+    except AttributeError:
+      self.thread_count = os.cpu_count()
 
     # Determine where our output is going
     self.output_path = os.path.expandvars(dict_deep_get(self.output_spec, ('path',)))
@@ -94,8 +99,8 @@ class TranscoderBase(object):
       self.r128gain()
       self.setOutputPermissions()
     except Exception:
-      puts(colored.red("Unlinking output path"))
-      os.unlink(self.output_album_dir)
+      puts(colored.red("Transcoding failed; unlinking output path"))
+      shutil.rmtree(self.output_album_path, ignore_errors=True)
       raise
 
 
@@ -121,13 +126,9 @@ class TranscoderBase(object):
         and file_ext_match(self.TRANSCODE_TYPES, d.name)
         and not d.name.startswith('.')
     ]
-    cmds = [self.buildTranscodeCmd(name) for name in files_transcode]
-    with ThreadPool() as pool:
-      puts("Transcoding...")
-      result = pool.map_async(subprocess.run, cmds)
-      pool.close()
-      pool.join()
-      for cp in result.get():
+    with ThreadPoolExecutor(max_workers=self.thread_count) as pool:
+      futures = [pool.submit(subprocess.run, self.buildTranscodeCmd(f)) for f in files_transcode]
+      for cp in as_completed(futures):
         head, tail = os.path.split(cp.args[-1])
         if cp.returncode == 0:
           puts("Transcoded '{}'".format(tail))
