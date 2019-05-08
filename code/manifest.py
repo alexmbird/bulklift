@@ -100,11 +100,12 @@ class Manifest(dict):
     m = d.setdefault('metadata', {})
     m.setdefault('album', '')
     m.setdefault('year', '')
-    unmasked = ['enabled', 'codec', 'lame_vbr', 'opus_bitrate']
+    unmasked = ['codec', 'lame_vbr', 'opus_bitrate']
     # print("outputs is {}".format(self['outputs']))
-    def _clean(spec):
-      return {k:v for k,v in spec.items() if k in unmasked}
-    d['outputs'] = {o_name: _clean(o_spec) for o_name, o_spec in self['outputs'].items()}
+    d.setdefault('outputs', {})
+    for o_name, o_spec in self['outputs'].items():
+      d['outputs'][o_name] = {k:v for k,v in o_spec.items() if k in unmasked}
+      d['outputs'][o_name].setdefault('enabled', True)  # for new templates default to on
     return d
 
 
