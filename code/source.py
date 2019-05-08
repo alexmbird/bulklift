@@ -10,7 +10,7 @@ class MediaSourceDir(object):
 
   def __init__(self, path, parent):
     self.parent = parent
-    self.path = path
+    self.path = Path(path).resolve()  # resolve() is important - keep it!
     self.manifest = Manifest.load(path)
 
 

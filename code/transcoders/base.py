@@ -36,7 +36,7 @@ class TranscoderBase(object):
       self.thread_count = os.cpu_count()
 
     # Determine where our output is going
-    self.output_path = Path(os.path.expandvars(dict_deep_get(self.output_spec, ('path',))))
+    self.output_path = Path(os.path.expandvars(dict_deep_get(self.output_spec, ('path',)))).resolve()
     self.output_album_path = self.output_path / self.OUTPUT_DIR_TEMPLATE.format(**self.metadata)
 
     # Find the binaries we will call
@@ -102,7 +102,7 @@ class TranscoderBase(object):
       self.setOutputPermissions()
     except Exception:
       puts(colored.red("Transcoding failed; unlinking output path"))
-      shutil.rmtree(str(self.output_album_path.resolve()), ignore_errors=True)
+      shutil.rmtree(str(self.output_album_path), ignore_errors=True)
       raise
 
 
@@ -116,10 +116,10 @@ class TranscoderBase(object):
     ]
     for path_src in files_copy:
       path_dst = self.output_album_path / path_src.name
-      puts("Copying '{}' -> '{}'".format(path_src.resolve(), path_dst.resolve()))
+      puts("Copying '{}' -> '{}'".format(path_src, path_dst))
       shutil.copy(
-        str(path_src.resolve()),
-        str(path_dst.resolve())
+        str(path_src),
+        str(path_dst)
       )
 
 
@@ -132,8 +132,8 @@ class TranscoderBase(object):
     ]
     with ThreadPoolExecutor(max_workers=self.thread_count) as pool:
       futures = [
-        pool.submit(subprocess.run, self.buildTranscodeCmd(str(f.resolve())))
-        for f in files_transcode
+        pool.submit(subprocess.run, self.buildTranscodeCmd(p))
+        for p in files_transcode
       ]
       for future in as_completed(futures):
         cp = future.result()
@@ -152,7 +152,7 @@ class TranscoderBase(object):
       '--opus-output-gain',
       '--recursive',
       '--verbosity', 'warning',
-      self.output_album_path.resolve()
+      self.output_album_path
     ]
     if self.r128gain_album:
       cmd.insert(1, '--album-gain')
@@ -172,11 +172,11 @@ class TranscoderBase(object):
     for p in self.output_album_path.iterdir():
       p.chmod(self.output_file_mode)
       if self.output_user or self.output_group:
-        shutil.chown(p.resolve(), user=self.output_user, group=self.output_group)
+        shutil.chown(str(p), user=self.output_user, group=self.output_group)
     puts("Set permissions on output files")
 
 
-  def buildTranscodeCmd(self, name):
+  def buildTranscodeCmd(self, source_path):
     """ Return a command appropriate for transcoding the specified file.
         Override to suit in transcoder implementations.  """
     raise NotImplementedError()
