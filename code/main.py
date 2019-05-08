@@ -34,7 +34,7 @@ def cmd_edit(args):
       stream.write(manifest.dumpTemplate())
   subprocess.run([
     os.environ.get('EDITOR', shutil.which('nano')),
-    manifest_path
+    str(manifest_path)
   ])
 
 
