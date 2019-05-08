@@ -4,4 +4,4 @@ crcmod==1.7
 mutagen==1.42.0
 pkg-resources==0.0.0
 PyYAML==5.1
-r128gain==0.7.1
+r128gain==0.8.3
