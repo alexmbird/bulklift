@@ -4,6 +4,8 @@ It is the year 2019.  Most of humanity has switched to streaming their music fro
 
 Rebels - I bring you a tool to ease your burden.  **Bulklift**.
 
+<p align=center><img src="docs/images/1280px-MARSEILLE_MAERSK.jpg" alt="Image from Wikipedia" width="75%"/></p>
+
 Bulklift walks your music library looking for `.bulklift.yaml` manifests.  It follows the instructions within to transcode any music that's in the same directory.
 
 Features:
