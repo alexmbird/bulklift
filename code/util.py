@@ -34,12 +34,5 @@ def dict_deep_get(d, path, default=DICT_DEFAULTS.no_default):
         raise
 
 
-def file_ext_match(haystack, needle):
-  """ Return True if normalised file extension is in supplied list haystack,
-      False otherwise.  Contents of haystack must be lowercase.  """
-  pre, ext = os.path.splitext(needle)
-  return ext.lower() in haystack
-
-
-def is_executable(path):
-  return os.path.isfile(path) and os.access(path, os.X_OK)
+# def is_executable(path):
+#   return os.path.isfile(path) and os.access(path, os.X_OK)

@@ -1,12 +1,13 @@
 import os
 import os.path
+from pathlib import Path
 import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from clint.textui import indent, puts, colored
 
-from util import file_ext_match, dict_deep_get
+from util import dict_deep_get
 
 
 # Filetypes that can be transcoded
@@ -35,9 +36,8 @@ class TranscoderBase(object):
       self.thread_count = os.cpu_count()
 
     # Determine where our output is going
-    self.output_path = os.path.expandvars(dict_deep_get(self.output_spec, ('path',)))
-    self.output_album_dir = self.OUTPUT_DIR_TEMPLATE.format(**self.metadata)
-    self.output_album_path = os.path.join(self.output_path, self.output_album_dir)
+    self.output_path = Path(os.path.expandvars(dict_deep_get(self.output_spec, ('path',))))
+    self.output_album_path = self.output_path / self.OUTPUT_DIR_TEMPLATE.format(**self.metadata)
 
     # Find the binaries we will call
     self.ffmpeg_path = self._getFfmpegBinary()
@@ -82,8 +82,8 @@ class TranscoderBase(object):
 
   def makeOutputDir(self):
     """ Make the output dir we'll be transcoding content into """
-    os.makedirs(self.output_album_path, self.output_dir_mode, exist_ok=False)
-    puts("Created dest dir '{}'".format(self.output_album_dir))
+    self.output_album_path.mkdir(self.output_dir_mode, parents=True, exist_ok=False)
+    puts("Created dest dir '{}'".format(self.output_album_path.name))
 
 
   def transcode(self):
@@ -91,7 +91,9 @@ class TranscoderBase(object):
     try:
       self.makeOutputDir()
     except OSError:
-      puts("Dest dir '{}' already exists; skipping".format(self.output_album_dir))
+      puts("Dest dir '{}' already exists; skipping".format(
+        self.output_album_path.name)
+      )
       return
     try:
       self.copyPreservedFiles()
@@ -107,27 +109,32 @@ class TranscoderBase(object):
   def copyPreservedFiles(self):
     """ Copy static content (e.g. album art) into the output dir """
     files_copy = [
-      d.name for d in os.scandir(self.source.path)
-      if d.is_file()
-        and file_ext_match(PRESERVE_TYPES, d.name)
-        and not d.name.startswith('.')
+      p for p in self.source.path.iterdir()
+      if p.is_file()
+        and p.suffix in PRESERVE_TYPES
+        and not p.name.startswith('.')
     ]
-    for name in files_copy:
-      source_path = os.path.join(self.source.path, name)
-      target_path = os.path.join(self.output_album_path, name)
-      puts("Copying '{}'".format(name))
-      shutil.copy(source_path, target_path)
+    for p in files_copy:
+      puts("Copying '{}'".format(p.name))
+      path_dst = self.output_album_path / p.name
+      shutil.copy(
+        str(p.resolve()),
+        str(path_dst.resolve())
+      )
 
 
   def transcodeMediaFiles(self):
     files_transcode = [
-      d.name for d in os.scandir(self.source.path)
-      if d.is_file()
-        and file_ext_match(TRANSCODE_TYPES, d.name)
-        and not d.name.startswith('.')
+      p for p in self.source.path.iterdir()
+      if p.is_file()
+        and p.suffix in TRANSCODE_TYPES
+        and not p.name.startswith('.')
     ]
     with ThreadPoolExecutor(max_workers=self.thread_count) as pool:
-      futures = [pool.submit(subprocess.run, self.buildTranscodeCmd(f)) for f in files_transcode]
+      futures = [
+        pool.submit(subprocess.run, self.buildTranscodeCmd(str(f.resolve())))
+        for f in files_transcode
+      ]
       for future in as_completed(futures):
         cp = future.result()
         head, tail = os.path.split(cp.args[-1])
@@ -145,7 +152,7 @@ class TranscoderBase(object):
       '--opus-output-gain',
       '--recursive',
       '--verbosity', 'warning',
-      self.output_album_path
+      self.output_album_path.resolve()
     ]
     if self.r128gain_album:
       cmd.insert(1, '--album-gain')
@@ -159,13 +166,14 @@ class TranscoderBase(object):
 
   def setOutputPermissions(self):
     """ Set desired perms / ownership on output dir and its contents """
-    os.chmod(self.output_album_path, self.output_dir_mode)
-    for d in os.scandir(self.output_album_path):
-      os.chmod(os.path.join(self.output_album_path, d.name), self.output_file_mode)
+    self.output_album_path.chmod(self.output_dir_mode)
     if self.output_user or self.output_group:
       shutil.chown(self.output_album_path, user=self.output_user, group=self.output_group)
-      for d in os.scandir(self.output_album_path):
-        shutil.chown(os.path.join(self.output_album_path, d.name), user=self.output_user, group=self.output_group)
+    for p in self.output_album_path.iterdir():
+      p.chmod(self.output_file_mode)
+      if self.output_user or self.output_group:
+        shutil.chown(p.resolve(), user=self.output_user, group=self.output_group)
+    puts("Set permissions on output files")
 
 
   def buildTranscodeCmd(self, name):
