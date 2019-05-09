@@ -15,20 +15,22 @@ class MediaSourceDir(object):
 
 
   def walk(self):
-    subnodes = [MediaSourceDir(p, self) for p in self.path.iterdir() if p.is_dir()]
-    for node in subnodes:
-      node.doTranscoding()
-      node.walk()
+    """ Recursively walk our tree, yielding every transcoding target we find """
+    for p in self.path.iterdir():
+      if p.is_dir():
+        msd = MediaSourceDir(p, self)
+        yield from msd.walk()
+    yield from self.targets()
 
 
-  def doTranscoding(self):
-    for o_name, o_spec in self.manifest.outputs:
-      transcoder = TRANSCODERS[o_spec['codec']](
-        self, self.manifest.metadata, o_spec, self.manifest.config
+  def targets(self):
+    """ Return a list of transcoder jobs specific to this directory """
+    def _mktc(name, spec):
+      klass = TRANSCODERS[spec['codec']]
+      return klass(
+        self, self.manifest.metadata, name, spec, self.manifest.config
       )
-      puts(str(transcoder))
-      with indent(2):
-        transcoder.transcode()
+    return [_mktc(n, s) for n, s in self.manifest.outputs]
 
 
   def __str__(self):

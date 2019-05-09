@@ -7,6 +7,8 @@ import subprocess
 import os
 import shutil
 
+from clint.textui import puts, indent
+
 from source import MediaSourceDir
 from manifest import Manifest
 
@@ -17,12 +19,21 @@ MIN_PYTHON_VERSION = (3,5,3)
 
 def cmd_transcode(args):
   tree_root = MediaSourceDir(Path(args.source_tree_root[0]), parent=None)
-  tree_root.walk()
+  jobs = list(tree_root.walk())
+  puts("Found {} transcoding jobs".format(len(jobs)))
+  for j in jobs:
+    puts("{}".format(j))
+    with indent(2):
+      j.transcode()
 
 
 def cmd_test(args):
   tree_root = MediaSourceDir(Path(args.source_tree_root[0]), parent=None)
-  sys.exit("no test yet")
+  for j in tree_root.walk():
+    puts("{}".format(j))
+    with indent(2):
+      j.dumpInfo()
+      puts()
 
 
 def cmd_edit(args):

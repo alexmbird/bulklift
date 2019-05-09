@@ -5,6 +5,7 @@ import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import math
+import yaml
 
 from clint.textui import indent, puts, colored
 
@@ -24,10 +25,11 @@ class TranscoderBase(object):
   FILE_EXTENSION = 'test'
 
 
-  def __init__(self, source, metadata, output_spec, config):
+  def __init__(self, source, metadata, output_name, output_spec, config):
     super(TranscoderBase, self).__init__()
     self.source = source
     self.metadata = metadata
+    self.output_name = output_name
     self.output_spec = output_spec
     self.config = config
 
@@ -186,5 +188,17 @@ class TranscoderBase(object):
     raise NotImplementedError()
 
 
+  def dumpInfo(self):
+    """ Print info about this transcoder's targets """
+    puts("Input:  {}".format(self.source.path))
+    puts("Output: {}".format(self.output_album_path))
+    puts("Spec:")
+    with indent(2):
+      puts(yaml.safe_dump(self.output_spec).strip())
+    puts("Metadata:")
+    with indent(2):
+      puts(yaml.safe_dump(self.metadata).strip())
+
+
   def __str__(self):
-    return "<{} writing to '{}'>".format(self.__class__.__name__, self.output_path)
+    return "<{} output:{}>".format(self.__class__.__name__, self.output_name)

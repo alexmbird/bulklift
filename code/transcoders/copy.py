@@ -16,7 +16,7 @@ class TranscoderCopy(TranscoderBase):
 
   def buildTranscodeCmd(self, source_path):
     """ Return a command appropriate for transcoding the specified file """
-    target_path = self.output_album_path, / source_path.name
+    target_path = self.output_album_path / source_path.name
     return [
       self.ffmpeg_path,
       '-y', '-loglevel', 'error',

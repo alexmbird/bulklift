@@ -35,8 +35,8 @@ class TranscoderOpus(TranscoderBase):
 
 
   def __str__(self):
-    return "<{} writing to '{}' br:{}>".format(
+    return "<{} output:{} br:{}>".format(
       self.__class__.__name__,
-      self.output_path,
+      self.output_name,
       self.opus_bitrate
     )

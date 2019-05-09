@@ -56,6 +56,7 @@ source_tree > $ bulklift transcode .                # transcode any new targets
 
 -   **Regenerate an album** (e.g. if your encoder has improved) - delete the directory from your output tree(s) and run `bulklift transcode` again.
 -   **Edit a manifest** - `bulklift edit [path to dir]`.  Default is the current directory.  If no `.bulklift.yaml` exists Bulklift will intelligently generate a template based on the directory's contents and the manifests of its ancestors.
+-   **Test your manifests** - `bulklift test <source_root>`.  Prints info about each manifest it finds.
 
 
 ## Configuration

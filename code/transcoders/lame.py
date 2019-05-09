@@ -33,8 +33,8 @@ class TranscoderLame(TranscoderBase):
 
 
   def __str__(self):
-    return "<{} writing to '{}' vbr:{}>".format(
+    return "<{} output:{} vbr:{}>".format(
       self.__class__.__name__,
-      self.output_path,
+      self.output_name,
       self.lame_vbr
     )
