@@ -2,7 +2,7 @@
 
 It is the year 2019.  Most of humanity has switched to streaming their music from an entity known as "The Cloud".  A brave group of rebels hold out, clinging valiantly to their own music libraries but struggling ever harder to sync them across multiple devices.
 
-Rebels - I bring you a tool to ease your burden.  **Bulklift**.
+Rebels, I bring a tool to ease your burden.  **Bulklift**.
 
 <p align=center><img src="docs/images/1280px-MARSEILLE_MAERSK.jpg" alt="Image from Wikipedia" width="75%"/></p>
 
