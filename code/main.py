@@ -7,7 +7,7 @@ import subprocess
 import os
 import shutil
 
-from clint.textui import puts, indent
+from clint.textui import puts, indent, colored
 
 from source import MediaSourceDir
 from manifest import Manifest
@@ -18,27 +18,39 @@ MIN_PYTHON_VERSION = (3,5,3)
 
 
 def cmd_transcode(args):
+  """ Find any outstanding transcoding jobs and action them """
   tree_root = MediaSourceDir(Path(args.source_tree_root[0]), parent=None)
-  jobs = list(tree_root.walk())
-  puts("Found {} transcoding jobs".format(len(jobs)))
-  for j in jobs:
-    puts("{}".format(j))
+  targets = list(tree_root.targets())  # discover manifest errors at the start
+  for t in targets:
+    puts("{}".format(t))
     with indent(2):
-      j.transcode()
+      t.transcode()
+      puts()
+  if args.noclean:
+    puts("Skipping cleanup of redundant targets")
+  else:
+    tree_root.cleanup()
 
 
 def cmd_test(args):
+  """ Load & parse every manifest then dump it to stdout.  If the yaml is
+      malformatted errors will become apparent here.  TODO: check for
+      expected fields """
   tree_root = MediaSourceDir(Path(args.source_tree_root[0]), parent=None)
-  for j in tree_root.walk():
-    puts("{}".format(j))
+  targets = list(tree_root.targets())  # discover manifest errors at the start
+  for t in targets:
+    puts("{}".format(t))
     with indent(2):
-      j.dumpInfo()
+      t.dumpInfo()
       puts()
 
 
 def cmd_edit(args):
-  abspath = Path(args.dir[0]).resolve()
+  """ Edit the manifest for a directory.  If none exists generate a sensible
+      template to start from """
+  abspath = Path(args.dir).resolve()
   manifest_path = Manifest.manifest_file_name(abspath)
+  puts("Editing manifest for '{}'".format(manifest_path))
   if not manifest_path.exists():
     manifest = Manifest.load(abspath)
     with manifest_path.open('w') as stream:
@@ -49,17 +61,14 @@ def cmd_edit(args):
   ])
 
 
-DESCRIPTION = """
-Bulklift: a tool for transcoding your music library.
+parser = argparse.ArgumentParser(
+  description="Bulklift: a tool for transcoding your music library.",
+  epilog="""
+For more information and the latest version see https://github.com/alexmbird/bulklift.
 """.strip()
+)
 
-EPILOG = """
-For more information and the latest version see
-https://github.com/alexmbird/bulklift.
-""".strip()
-
-
-parser = argparse.ArgumentParser(description=DESCRIPTION, epilog=EPILOG)
+parser.set_defaults(func=lambda args: parser.print_help())
 
 parser.add_argument('--debug', action='store_true',
                     help="debugging output")
@@ -68,18 +77,21 @@ subparsers = parser.add_subparsers(dest='subcommand')
 
 sp_test = subparsers.add_parser('test', help="test manifests")
 sp_test.set_defaults(func=cmd_test)
-sp_test.add_argument('source_tree_root', type=str, nargs=1,
-                     help="root path for your source tree; must contain a .bulklift.yaml with root=true")
+sp_test.add_argument('source_tree_root', type=str, nargs=1, default='.',
+                     help="root path for your source tree; must contain a .bulklift.yaml with root=true.  Default is current dir.")
 
 sp_tc = subparsers.add_parser('transcode', help="transcode audio to output trees")
 sp_tc.set_defaults(func=cmd_transcode)
-sp_tc.add_argument('source_tree_root', type=str, nargs=1,
-                     help="root path for your source tree; must contain a .bulklift.yaml with root=true")
+sp_tc.add_argument('--noclean', action='store_true',
+                  help="skip removal of redundant albums from output tree(s)")
+sp_tc.add_argument('source_tree_root', type=str, nargs=1, default='.',
+                   help="root path for your source tree; must contain a .bulklift.yaml with root=true.  Default is current dir.")
 
 sp_edit = subparsers.add_parser('edit', help="create/edit a .bulklift.yml manifest")
 sp_edit.set_defaults(func=cmd_edit)
-sp_edit.add_argument('dir', nargs='?', default=['.'],
+sp_edit.add_argument('dir', nargs='?', default='.',
                      help="path to *directory* whose manifest to edit")
+
 
 
 if __name__ == '__main__':
@@ -97,4 +109,5 @@ if __name__ == '__main__':
     if args.debug:
       raise
     else:
-      sys.exit("Fatal: {}".format(e))
+      puts(colored.red(str(e)))
+      sys.exit(1)

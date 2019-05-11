@@ -2,9 +2,15 @@ import yaml
 from copy import deepcopy
 from pathlib import Path
 
+from clint.textui import puts, colored
+
 from util import dict_deep_merge
 from transcoders import TRANSCODE_TYPES
 
+
+
+class ManifestError(Exception):
+  "Problem reading or parsing a manifest file"
 
 
 class Manifest(dict):
@@ -38,6 +44,7 @@ class Manifest(dict):
 
   @classmethod
   def load(cls, path):
+    """ Load a manifest file, preferring a cached copy if available """
     if not isinstance(path, Path):
       raise TypeError("Manifest takes pathlib.Path")
     if not path.is_dir():
@@ -46,23 +53,35 @@ class Manifest(dict):
     try:
       return cls.MANIFEST_CACHE[path]
     except KeyError:
-      try:
-        with cls.manifest_file_name(path).open('r') as stream:
-          data = yaml.safe_load(stream)
-      except FileNotFoundError:
-        data = {}
-      if data.get('root', False):
-        manifest = Manifest(path, data)
-      else:
-        if path == path.parent:   # Reached / without finding a root manifest
-          raise RecursionError("Root manifest could not be found; did you miss a 'root: true'?")
-        parent_manifest = cls.load(path.parent)
-        new = deepcopy(parent_manifest)
-        dict_deep_merge(new, data)
-        new.pop('root', None)  # it is definitely not the root
-        manifest = Manifest(path, new)
-      cls.MANIFEST_CACHE[path] = manifest
-      return manifest
+      return cls.loadFresh(path)
+
+
+  @classmethod
+  def loadFresh(cls, path):
+    """ Load a manifest file from disk, insert it into the cache and return a
+        a fresh Manifest object.  Any previously cached object will be
+        replaced.  """
+    manifest_path = cls.manifest_file_name(path)
+    try:
+      with manifest_path.open('r') as stream:
+        data = yaml.safe_load(stream)
+    except FileNotFoundError:
+      data = {}
+    except yaml.scanner.ScannerError as e:
+      raise ManifestError("Error parsing {}:\n\n{}".format(manifest_path, e))
+
+    if data.get('root', False):
+      manifest = Manifest(path, data)
+    else:
+      if path == path.parent:   # Reached / without finding a root manifest
+        raise RecursionError("Root manifest could not be found; did you miss a 'root: true'?")
+      parent_manifest = cls.load(path.parent)
+      new = deepcopy(parent_manifest)
+      dict_deep_merge(new, data)
+      new.pop('root', None)  # it is definitely not the root
+      manifest = Manifest(path, new)
+    cls.MANIFEST_CACHE[path] = manifest
+    return manifest
 
 
   def is_music_dir(self):
@@ -120,7 +139,12 @@ class Manifest(dict):
 
   @property
   def outputs(self):
-    return [(name, spec) for name, spec in self.get('outputs', {}).items() if spec.get('enabled', False)]
+    return [(name, spec) for name, spec in self.get('outputs', {}).items()]
+
+
+  @property
+  def outputs_enabled(self):
+    return [(name, spec) for name, spec in self.outputs if spec.get('enabled', False)]
 
 
   @property
