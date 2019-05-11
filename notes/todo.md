@@ -6,6 +6,7 @@
 -   [ ] Filters to include/exclude files from a dir by list/glob
 -   [ ] Transcode for only one target in a single run.  This fits the model of updating a media library on an occasionally-connected device, e.g. a phone mounted with fuse-mtp.
 -   [ ] Check manifest content in test mode, not just yaml parsing
+-   [ ] Test new manifests after they get created in edit mode
 -   [ ] Optionally overwrite metadata in output
 -   [ ] Extra output formats (m4a)
 -   [ ] Handle ctrl+c more gracefully
