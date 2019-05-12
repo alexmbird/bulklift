@@ -9,7 +9,7 @@ import shutil
 
 from clint.textui import puts, indent, colored
 
-from source import MediaSourceDir
+from source import MediaSourceRoot
 from manifest import Manifest
 
 
@@ -19,7 +19,7 @@ MIN_PYTHON_VERSION = (3,5,3)
 
 def cmd_transcode(args):
   """ Find any outstanding transcoding jobs and action them """
-  tree_root = MediaSourceDir(Path(args.source_tree_root[0]), parent=None)
+  tree_root = MediaSourceRoot(Path(args.source_tree_root[0]))
   targets = [t for t in tree_root.targets() if t.is_stale()]
   for t in targets:
     puts("{}".format(t))
@@ -36,7 +36,7 @@ def cmd_test(args):
   """ Load & parse every manifest then dump it to stdout.  If the yaml is
       malformatted errors will become apparent here.  TODO: check for
       expected fields """
-  tree_root = MediaSourceDir(Path(args.source_tree_root[0]), parent=None)
+  tree_root = MediaSourceRoot(Path(args.source_tree_root[0]))
   targets = list(tree_root.targets())  # discover manifest errors at the start
   for t in targets:
     puts("{}".format(t))
@@ -47,7 +47,7 @@ def cmd_test(args):
 
 def cmd_addsigs(args):
   """ Add .bulklift.sig files to any targets missing one """
-  tree_root = MediaSourceDir(Path(args.source_tree_root[0]), parent=None)
+  tree_root = MediaSourceRoot(Path(args.source_tree_root[0]))
   targets = list(tree_root.targets())  # discover manifest errors at the start
   for t in targets:
     puts("{}".format(t))

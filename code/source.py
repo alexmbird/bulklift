@@ -9,6 +9,9 @@ from transcoders import TRANSCODERS
 
 
 class MediaSourceDir(object):
+  """ A single directory within the media source tree.  The existence of a dir
+      doesn't necessarily imply it has transcodable content - that requires a
+      valid manifest file with one or more targets enabled.  """
 
   def __init__(self, path, parent):
     self.parent = parent
@@ -21,7 +24,7 @@ class MediaSourceDir(object):
         subdirectory we find.  """
     for p in self.path.iterdir():
       if p.is_dir() and not p.name.startswith('.'):
-        yield from self.__class__(p, self).walk()
+        yield from MediaSourceDir(p, self).walk()
     if self.manifest.exists():  # only dirs with a manifest, not their subdirs
       yield self
 
@@ -36,10 +39,31 @@ class MediaSourceDir(object):
         )
 
 
+  def outputAlbumPaths(self):
+    """ Convenience method: list all album paths this source tree can be
+        expected to generate """
+    for msd in self.walk():
+      for target in msd.targets():
+        yield target.output_album_path
+
+
+  def __str__(self):
+    return "<{} {}>".format(self.__class__.__name__, self.path)
+
+
+class MediaSourceRoot(MediaSourceDir):
+  """ A special kind of MediaSourceDir that is the root of the tree.  Contains
+      extra methods that only make sense when called over a complete tree. """
+
+  def __init__(self, path):
+    """ Variant of the constructor without a parent arg, because root has no
+        parents.  """
+    super(MediaSourceRoot,self).__init__(path, None)
+
+
   def cleanup(self):
     """ Remove any deprecated directories from the output tree, i.e. those that
         were generated from a manifest/target that no longer exists """
-    assert self.manifest.is_root()  # cleanup must have a complete target set
     expected_dirs = [str(p) for p in self.outputAlbumPaths()]
     def isexpected(p):
       return any(map(
@@ -63,15 +87,3 @@ class MediaSourceDir(object):
       Path(os.path.expandvars(spec['path']))
       for name, spec in self.manifest.outputs
     ]
-
-
-  def outputAlbumPaths(self):
-    """ Convenience method: list all album paths this source tree can be
-        expected to generate """
-    for msd in self.walk():
-      for target in msd.targets():
-        yield target.output_album_path
-
-
-  def __str__(self):
-    return "<{} {}>".format(self.__class__.__name__, self.path)
