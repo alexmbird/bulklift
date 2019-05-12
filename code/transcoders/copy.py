@@ -29,3 +29,10 @@ class TranscoderCopy(TranscoderBase):
       '-metadata', 'comment={}'.format(self.COMMENT),
       str(target_path)
     ]
+
+
+  def codecSignature(self):
+    """ Return a string representing the codec & settings used to transcode
+        the output.  This can be used to detect when the target is outdated and
+        needs regenerating.  """
+    return ('copy', self.output_spec.get('gain', {}))

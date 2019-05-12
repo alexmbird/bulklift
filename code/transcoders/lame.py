@@ -32,6 +32,13 @@ class TranscoderLame(TranscoderBase):
     ]
 
 
+  def codecSignature(self):
+    """ Return a string representing the codec & settings used to transcode
+        the output.  This can be used to detect when the target is outdated and
+        needs regenerating.  """
+    return ('libmp3lame', self.output_spec['lame_vbr'], self.output_spec.get('gain', {}))
+
+
   def __str__(self):
     return "<{} output:{} vbr:{}>".format(
       self.__class__.__name__,

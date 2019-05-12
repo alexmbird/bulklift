@@ -4,6 +4,7 @@ from pathlib import Path
 import shutil
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from hashlib import sha256
 import yaml
 
 from clint.textui import indent, puts, colored
@@ -22,6 +23,7 @@ class TranscoderBase(object):
 
   OUTPUT_DIR_TEMPLATE = "{genre}/{artist}/{year} {album}"
   FILE_EXTENSION = 'test'
+  SIGNATURE_FILE_NAME = '.bulklift.sig'
 
 
   def __init__(self, source, metadata, output_name, output_spec, config):
@@ -58,6 +60,13 @@ class TranscoderBase(object):
     self.output_user = dict_deep_get(self.output_spec, ('permissions', 'user'), default=None)
     self.output_group = dict_deep_get(self.output_spec, ('permissions', 'group'), default=None)
 
+    # Calculate signatures
+    self.signatures = {
+      'codec': sha256(yaml.safe_dump(self.codecSignature(), encoding='utf8')).hexdigest(),
+      'media': sha256(yaml.safe_dump(self.mediaSignature(), encoding='utf8')).hexdigest(),
+      'metadata': sha256(yaml.safe_dump(self.metadata, encoding='utf8')).hexdigest()
+    }
+
 
   def _getFfmpegBinary(self):
     try:
@@ -84,23 +93,20 @@ class TranscoderBase(object):
 
   def makeOutputDir(self):
     """ Make the output dir we'll be transcoding content into """
-    self.output_album_path.mkdir(self.output_dir_mode, parents=True, exist_ok=False)
+    shutil.rmtree(str(self.output_album_path), ignore_errors=True)
+    self.output_album_path.mkdir(self.output_dir_mode, parents=True, exist_ok=True)
     puts("Created dest dir '{}'".format(self.output_album_path.name))
 
 
   def transcode(self):
     """ Create the appropriate version of the content """
-    try:
-      self.makeOutputDir()
-    except OSError:
-      puts("Dest dir '{}' already exists; skipping".format(
-        self.output_album_path.name)
-      )
-      return
+    puts("Transcoding album from {}".format(self.source.path))
+    self.makeOutputDir()
     try:
       self.copyPreservedFiles()
       self.transcodeMediaFiles()
       self.r128gain()
+      self.writeSignatures()
       self.setOutputPermissions()
     except Exception:
       puts(colored.red("Transcoding failed; unlinking output path"))
@@ -108,15 +114,20 @@ class TranscoderBase(object):
       raise
 
 
-  def copyPreservedFiles(self):
-    """ Copy static content (e.g. album art) into the output dir """
-    files_copy = [
+  def sourcePreservedFiles(self):
+    """ Return a list of the files we should copy unchanged from the source
+        directory.  Sorted so a change in filesystem can't change the hash. """
+    return sorted([
       p for p in self.source.path.iterdir()
       if p.is_file()
         and p.suffix in PRESERVE_TYPES
         and not p.name.startswith('.')
-    ]
-    for path_src in files_copy:
+    ])
+
+
+  def copyPreservedFiles(self):
+    """ Copy static content (e.g. album art) into the output dir """
+    for path_src in self.sourcePreservedFiles():
       path_dst = self.output_album_path / path_src.name
       puts("Copying '{}' -> '{}'".format(path_src, path_dst))
       shutil.copy(
@@ -125,13 +136,19 @@ class TranscoderBase(object):
       )
 
 
-  def transcodeMediaFiles(self):
-    files_transcode = [
+  def sourceMediaFiles(self):
+    """ Return a list of files in the source directory that we should
+        transcode.  Sorted so a change in filesystem can't change the hash. """
+    return sorted([
       p for p in self.source.path.iterdir()
       if p.is_file()
         and p.suffix in TRANSCODE_TYPES
         and not p.name.startswith('.')
-    ]
+    ])
+
+
+  def transcodeMediaFiles(self):
+    files_transcode = self.sourceMediaFiles()
     with ThreadPoolExecutor(max_workers=self.thread_count) as pool:
       futures = [
         pool.submit(subprocess.run, self.buildTranscodeCmd(p))
@@ -185,6 +202,42 @@ class TranscoderBase(object):
     raise NotImplementedError()
 
 
+  def codecSignature(self):
+    """ Return a string representing the codec & settings used to transcode
+        the output.  This can be used to detect when the target is outdated and
+        needs regenerating.  """
+    raise NotImplementedError()
+
+
+  def mediaSignature(self):
+    """ Return a string representing the contents of files that will be
+        transcoded.  This can be used to detect when the target is outdated and
+        needs regenerating.  Rather than hashing terabytes of media on every
+        run we use the name + mtime of the file.  Move your library with care!
+    """
+    paths = self.sourcePreservedFiles() + self.sourceMediaFiles()
+    name_mtimes = [(p.name, p.stat().st_mtime) for p in paths]
+    return sorted(name_mtimes)
+
+
+  def writeSignatures(self):
+    signature_path = self.output_album_path / self.SIGNATURE_FILE_NAME
+    puts("Writing {}".format(signature_path))
+    with signature_path.open('w') as stream:
+      stream.write(yaml.safe_dump(self.signatures))
+
+
+  def is_stale(self):
+    """ Return True if the target is absent or stale """
+    signature_path = self.output_album_path / self.SIGNATURE_FILE_NAME
+    try:
+      with signature_path.open('r', encoding='utf8') as stream:
+        old_sig = yaml.safe_load(stream)
+    except FileNotFoundError:
+      return True  # no signature, definitely stale
+    return old_sig != self.signatures
+
+
   def dumpInfo(self):
     """ Print info about this transcoder's targets """
     puts("Input:  {}".format(self.source.path))
@@ -195,6 +248,10 @@ class TranscoderBase(object):
     puts("Metadata:")
     with indent(2):
       puts(yaml.safe_dump(self.metadata).strip())
+    puts("Signatures:")
+    with indent(2):
+      for k, v in self.signatures.items():
+        puts("{}: {}".format(k,v))
 
 
   def __str__(self):

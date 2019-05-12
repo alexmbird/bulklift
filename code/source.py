@@ -20,7 +20,7 @@ class MediaSourceDir(object):
     """ Recursively walk our tree, yielding a MediaSourceDir for every
         subdirectory we find.  """
     for p in self.path.iterdir():
-      if p.is_dir():
+      if p.is_dir() and not p.name.startswith('.'):
         yield from self.__class__(p, self).walk()
     yield self
 

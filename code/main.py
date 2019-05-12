@@ -20,7 +20,7 @@ MIN_PYTHON_VERSION = (3,5,3)
 def cmd_transcode(args):
   """ Find any outstanding transcoding jobs and action them """
   tree_root = MediaSourceDir(Path(args.source_tree_root[0]), parent=None)
-  targets = list(tree_root.targets())  # discover manifest errors at the start
+  targets = [t for t in tree_root.targets() if t.is_stale()]
   for t in targets:
     puts("{}".format(t))
     with indent(2):
@@ -43,6 +43,19 @@ def cmd_test(args):
     with indent(2):
       t.dumpInfo()
       puts()
+
+
+def cmd_addsigs(args):
+  """ Add .bulklift.sig files to any targets missing one """
+  tree_root = MediaSourceDir(Path(args.source_tree_root[0]), parent=None)
+  targets = list(tree_root.targets())  # discover manifest errors at the start
+  for t in targets:
+    puts("{}".format(t))
+    with indent(2):
+      try:
+        t.writeSignatures()
+      except FileNotFoundError:
+        puts(colored.red("Target dir was missing"))
 
 
 def cmd_edit(args):
@@ -91,6 +104,11 @@ sp_edit = subparsers.add_parser('edit', help="create/edit a .bulklift.yml manife
 sp_edit.set_defaults(func=cmd_edit)
 sp_edit.add_argument('dir', nargs='?', default='.',
                      help="path to *directory* whose manifest to edit")
+
+sp_sigs = subparsers.add_parser('addsigs', help="add .bulklift.sig files to targets missing one")
+sp_sigs.set_defaults(func=cmd_addsigs)
+sp_sigs.add_argument('source_tree_root', type=str, nargs=1, default='.',
+                     help="root path for your source tree; must contain a .bulklift.yaml with root=true.  Default is current dir.")
 
 
 
