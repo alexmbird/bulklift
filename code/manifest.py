@@ -84,6 +84,11 @@ class Manifest(dict):
     return manifest
 
 
+  def exists(self):
+    """ Return True if this manifest exists on disk """
+    return self.manifest_file_name(self.path).is_file()
+
+
   def is_music_dir(self):
     """ Return True if this path contains any supported media types """
     for p in self.path.iterdir():

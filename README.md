@@ -34,8 +34,6 @@ $ . venv/bin/activate      # or variant for your shell
 $ pip3 install wheel
 $ pip3 install -r requirements.txt
 ```
-TBD: release binaries compiled with [PyInstaller](http://www.pyinstaller.org/), packages on [PyPi](https://pypi.org/).
-
 
 ## Testing
 ```plain
@@ -105,7 +103,7 @@ Some of the more common options...
 | `config.binaries.ffmpeg` | - | `${HOME}/.local/bin/ffmpeg` | Ffmpeg binary to use.  Often this is of value when you want to transcode with a more recent build than the one shipped with your OS.  Default is to search your path. |
 | `config.binaries.r128gain` | - | `${HOME}/.local/bin/r128gain` | [r128gain](https://github.com/desbma/r128gain) binary to use.  Default is to search your path. |
 | `outputs`  | -        | `{}`    | Map of outputs BL _may_ transcode to.  While typically (but not necessarily) defined in your root manifest they only take effect for albums in which their `enabled` flag is set to `true`. |
-| `outputs.<name>.enabled` | - | `true` | Toggle transcoding for a given output.  Default is `false` and in the normal use case you'll set it to `true` for any album you want in a given target.  You could also set it `true` in the root manifest (to transcode absolutely everything for a given target) or at an intermediate level (i.e. "give me everything for this specific artist"). |
+| `outputs.<name>.enabled` | - | `true` | Toggle transcoding for a given output.  Default is `false` and in the normal use case you'll set it to `true` for any album you want in a given target.  NB: Bulklift won't transcode an album unless it contains a manifest file, so setting `enabled=true` at the root level won't have an effect for dirs with no `.bulklift.yaml`. |
 | `outputs.<name>.codec`| Y | `copy`, `opus` | Codec to use when transcoding objects described by this manifest.  Typically you'll set this once when defining the output.  However you may want to override it in some cases, e.g. to copy mp3 audio rather than re-transcoding it to opus. |
 | `outputs.<name>.opus_bitrate`| - | `128k` | Bitrate to use for libopus.  Encoding is VBR so results are approximate. |
 | `outputs.<name>.lame_vbr`| - | `3` | VBR setting for libmp3lame.  Encoding is VBR so results are approximate. |

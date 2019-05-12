@@ -22,7 +22,8 @@ class MediaSourceDir(object):
     for p in self.path.iterdir():
       if p.is_dir() and not p.name.startswith('.'):
         yield from self.__class__(p, self).walk()
-    yield self
+    if self.manifest.exists():  # only dirs with a manifest, not their subdirs
+      yield self
 
 
   def targets(self):
