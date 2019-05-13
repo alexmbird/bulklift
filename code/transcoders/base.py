@@ -66,7 +66,7 @@ class TranscoderBase(object):
     """ Return path to user-selected binary or first found in $PATH """
     try:
       found = os.path.expandvars(self.config['binaries'][binary])
-      if not (os.path.isfile(path) and os.access(path, os.X_OK)):
+      if not (os.path.isfile(found) and os.access(found, os.X_OK)):
         raise FileNotFoundError(
           "user-configured {} binary not present or executable".format(found)
         )
