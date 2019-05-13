@@ -14,25 +14,13 @@ def dict_deep_merge(a, b):
         a[k] = b[k]
 
 
-# None is sometimes a legit value so let's use this to prevent clashes
-DICT_DEFAULTS = enum.Enum('DictDefaults', 'no_default')
-
-def dict_deep_get(d, path, default=DICT_DEFAULTS.no_default):
-  """ Try to extract a value from a tree of dicts.  `path` is a list of keys
-      in the order that they will be accessed.  """
-  if not isinstance(path, (list, tuple)):  # easy to pass a string by mistake
-    raise TypeError("path must be a list or tuple")
-  if len(path) == 0:
-    return d
-  else:
-    try:
-      return dict_deep_get(d[path[0]], path[1:], default)
-    except KeyError:
-      if default is not DICT_DEFAULTS.no_default:
-        return default
-      else:
-        raise
-
-
-# def is_executable(path):
-#   return os.path.isfile(path) and os.access(path, os.X_OK)
+def dict_not_nulls(d, unwanted=(None, {}, [])):
+  """ Return a new dict containing pairs from the original where the value is
+      not empty  """
+  new = {}
+  for k, v in d.items():
+    if isinstance(v, dict):
+      v = dict_not_nulls(v)
+    if v not in unwanted:
+      new[k] = v
+  return new

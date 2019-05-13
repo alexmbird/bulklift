@@ -5,10 +5,11 @@
 -   [X] <strike>Save a signature in each target directory generated from (codec, bitrate, codec_release, metadata) and automatically regenerate media when these things change</strike>
 -   [X] <strike>BUGFIX: subdirectories of dirs with `enabled=true` are not handled well</strike>
 -   [X] <strike>Handle ctrl+c during transcoding more gracefully</strike>
+-   [X] <strike>Store a `codec_version` field in signature so targets can be regenerated when better-performing versions are released</strike>
+-   [X] <strike>QUALITY: Dedicated dict-like object for `target`s with sane defaults</strike>
 -   [ ] Separately configure number of threads for encoding and r128gain
--   [ ] Store a `codec_version` field in signature so targets can be regenerated when better-performing versions are released
+-   [ ] BUGFIX: chown/chmod whole target tree(s) at end of run; doing individual dirs misses out any parent dirs created with `Path.mkdir(parents=True)`
 -   [ ] Override template used to generate target album path from metadata; the default one doesn't suit mixes & soundtracks
--   [ ] Dedicated dict-like object for `target`s with sane defaults
 -   [ ] Filters to include/exclude files from a dir by list/glob
 -   [ ] Transcode for only one target in a single run.  This fits the model of updating a media library on an occasionally-connected device, e.g. a phone mounted with fuse-mtp.
 -   [ ] Check manifest content in test mode, not just yaml parsing

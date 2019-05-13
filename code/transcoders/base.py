@@ -6,10 +6,11 @@ import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from hashlib import sha256
 import yaml
+from copy import deepcopy
 
 from clint.textui import indent, puts, colored
 
-from util import dict_deep_get
+from util import dict_not_nulls
 
 
 # Filetypes that can be transcoded
@@ -25,9 +26,10 @@ class TranscodingError(Exception):
 
 class TranscoderBase(object):
 
+  SIGNATURE_FILE_NAME = '.bulklift.sig'
   OUTPUT_DIR_TEMPLATE = "{genre}/{artist}/{year} {album}"
   FILE_EXTENSION = 'test'
-  SIGNATURE_FILE_NAME = '.bulklift.sig'
+  MANDATORY_SPEC_FIELDS = ('codec', 'enabled')
 
 
   def __init__(self, source, metadata, output_name, output_spec, config):
@@ -44,25 +46,13 @@ class TranscoderBase(object):
       self.thread_count = os.cpu_count()
 
     # Determine where our output is going
-    self.output_path = Path(os.path.expandvars(dict_deep_get(self.output_spec, ('path',)))).resolve()
+    self.output_path = Path(os.path.expandvars(self.output_spec['path'])).resolve()
     self.output_album_path = self.output_path / self.OUTPUT_DIR_TEMPLATE.format(**self.metadata)
 
-    # Find the binaries we will call
-    self.ffmpeg_path = self._getFfmpegBinary()
-    if self.ffmpeg_path is None:
-      sys.exit("Fatal: no ffmpeg binary available")
-    self.r128gain_path = self._getR128gainBinary()
-    if self.r128gain_path is None:
-      sys.exit("Fatal: no r128gain binary available")
-
-    # Determine some other settings
-    self.r128gain_album = dict_deep_get(self.output_spec, ('gain', 'album'), True)
-    self.output_dir_mode = \
-      int(dict_deep_get(self.output_spec, ('permissions', 'dir_mode'), default='0750'), 8)
-    self.output_file_mode = \
-      int(dict_deep_get(self.output_spec, ('permissions', 'file_mode'), default='0750'), 8)
-    self.output_user = dict_deep_get(self.output_spec, ('permissions', 'user'), default=None)
-    self.output_group = dict_deep_get(self.output_spec, ('permissions', 'group'), default=None)
+    # Find the binaries we will call.  If missing, better to find out before
+    # starting a lengthy transcode job.
+    self.ffmpeg_path = self._getBinary('ffmpeg')
+    self.r128gain_path = self._getBinary('r128gain')
 
     # Calculate signatures
     self.signatures = {
@@ -72,22 +62,19 @@ class TranscoderBase(object):
     }
 
 
-  def _getFfmpegBinary(self):
+  def _getBinary(self, binary):
+    """ Return path to user-selected binary or first found in $PATH """
     try:
-      return os.path.expandvars(
-        dict_deep_get(self.config, ('binaries', 'ffmpeg'))
-      )
+      found = os.path.expandvars(self.config['binaries'][binary])
+      if not (os.path.isfile(path) and os.access(path, os.X_OK)):
+        raise FileNotFoundError(
+          "user-configured {} binary not present or executable".format(found)
+        )
     except KeyError:
-      return shutil.which('ffmpeg')
-
-
-  def _getR128gainBinary(self):
-    try:
-      return os.path.expandvars(
-        dict_deep_get(self.config, ('binaries', 'r128gain'))
-      )
-    except KeyError:
-      return shutil.which('r128gain')
+      found = shutil.which(binary)
+      if found is None:
+        raise FileNotFoundError("cannot find a {} binary in your path".format(binary))
+    return found
 
 
   def outputFileName(self, source_file):
@@ -98,7 +85,7 @@ class TranscoderBase(object):
   def makeOutputDir(self):
     """ Make the output dir we'll be transcoding content into """
     shutil.rmtree(str(self.output_album_path), ignore_errors=True)
-    self.output_album_path.mkdir(self.output_dir_mode, parents=True, exist_ok=True)
+    self.output_album_path.mkdir(parents=True, exist_ok=True)
     puts("Created dest dir '{}'".format(self.output_album_path))
 
 
@@ -111,7 +98,6 @@ class TranscoderBase(object):
       self.transcodeMediaFiles()
       self.r128gain()
       self.writeSignatures()
-      self.setOutputPermissions()
     except Exception as e:
       puts(colored.red("Transcoding failed; unlinking output path"))
       shutil.rmtree(str(self.output_album_path), ignore_errors=True)
@@ -184,9 +170,11 @@ class TranscoderBase(object):
       '--verbosity', 'warning',
       str(self.output_album_path)
     ]
-    if self.r128gain_album:
+    if self.output_spec['gain']['album']:
       cmd.insert(1, '--album-gain')
-    puts("Running r128gain on output dir")
+    puts("Running r128gain on output dir (album: {})".format(
+      self.output_spec['gain']['album'])
+    )
     try:
       cp = subprocess.run(cmd)
     except KeyboardInterrupt:
@@ -195,18 +183,6 @@ class TranscoderBase(object):
       puts("Added replaygain tags")
     else:
       raise TranscodingError("Failed to add replaygain tags")
-
-
-  def setOutputPermissions(self):
-    """ Set desired perms / ownership on output dir and its contents """
-    self.output_album_path.chmod(self.output_dir_mode)
-    if self.output_user or self.output_group:
-      shutil.chown(str(self.output_album_path), user=self.output_user, group=self.output_group)
-    for p in self.output_album_path.iterdir():
-      p.chmod(self.output_file_mode)
-      if self.output_user or self.output_group:
-        shutil.chown(str(p), user=self.output_user, group=self.output_group)
-    puts("Set permissions on output files")
 
 
   def buildTranscodeCmd(self, source_path):
@@ -218,8 +194,12 @@ class TranscoderBase(object):
   def codecSignature(self):
     """ Return a string representing the codec & settings used to transcode
         the output.  This can be used to detect when the target is outdated and
-        needs regenerating.  """
-    raise NotImplementedError()
+        needs regenerating.  Overload in child classes to add more fields.  """
+    return (
+      self.__class__.__name__,
+      self.output_spec['codec_version'],
+      self.output_spec['gain']
+    )
 
 
   def mediaSignature(self):
@@ -256,11 +236,12 @@ class TranscoderBase(object):
     puts("Input:  {}".format(self.source.path))
     puts("Output: {}".format(self.output_album_path))
     puts("Spec:")
+    spec = dict_not_nulls(self.output_spec)
     with indent(2):
-      puts(yaml.safe_dump(self.output_spec).strip())
+      puts(yaml.safe_dump(dict_not_nulls(spec)).strip())
     puts("Metadata:")
     with indent(2):
-      puts(yaml.safe_dump(self.metadata).strip())
+      puts(yaml.safe_dump(dict_not_nulls(spec)).strip())
     puts("Signatures:")
     with indent(2):
       for k, v in self.signatures.items():

@@ -1,5 +1,3 @@
-from util import dict_deep_get
-
 from transcoders.base import TranscoderBase
 
 
@@ -7,11 +5,6 @@ class TranscoderLame(TranscoderBase):
 
   FILE_EXTENSION = 'mp3'
   COMMENT = "Bulklift 0.1 (ffmpeg + libmp3lame)"
-
-
-  def __init__(self, *args, **kwargs):
-    super(TranscoderLame, self).__init__(*args, **kwargs)
-    self.lame_vbr = dict_deep_get(self.output_spec, ('lame_vbr',), default='3')
 
 
   def buildTranscodeCmd(self, source_path):
@@ -23,7 +16,7 @@ class TranscoderLame(TranscoderBase):
       '-i', str(source_path),
       '-c:v', 'copy',
       '-codec:a', 'libmp3lame',
-      '-q:a', str(self.lame_vbr),
+      '-q:a', str(self.output_spec['lame_vbr']),
       '-map_metadata', '0',
       '-id3v2_version', '3',
       '-write_id3v1', '1',
@@ -36,12 +29,13 @@ class TranscoderLame(TranscoderBase):
     """ Return a string representing the codec & settings used to transcode
         the output.  This can be used to detect when the target is outdated and
         needs regenerating.  """
-    return ('libmp3lame', self.output_spec['lame_vbr'], self.output_spec.get('gain', {}))
+    return super(TranscoderLame, self).codecSignature() + \
+      (self.output_spec['lame_vbr'],)
 
 
   def __str__(self):
     return "<{} output:{} vbr:{}>".format(
       self.__class__.__name__,
       self.output_name,
-      self.lame_vbr
+      self.output_spec['lame_vbr']
     )

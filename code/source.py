@@ -35,7 +35,7 @@ class MediaSourceDir(object):
       for name, spec in msd.manifest.outputs_enabled:
         klass = TRANSCODERS[spec['codec']]
         yield klass(
-          msd, msd.manifest.metadata, name, spec, msd.manifest.config
+          msd, msd.manifest['metadata'], name, spec, msd.manifest['config']
         )
 
 

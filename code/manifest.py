@@ -13,9 +13,45 @@ class ManifestError(Exception):
   "Problem reading or parsing a manifest file"
 
 
+class ManifestOutput(dict):
+  """ Dict-like representing an output, with sensible defaults """
+  def __init__(self, *args, **kwargs):
+    super(ManifestOutput, self).__init__(*args, **kwargs)
+    self.setdefault('codec', 'null')
+    self.setdefault('enabled', False)
+    self.setdefault('codec_version', None)
+    self.setdefault('lame_vbr', 3)
+    self.setdefault('opus_bitrate', '128k')
+    self.setdefault('gain', {})
+    self['gain'].setdefault('album', True)
+    self.setdefault('permissions', {})
+    self['permissions'].setdefault('dir_mode', None)
+    self['permissions'].setdefault('file_mode', None)
+    self['permissions'].setdefault('user', None)
+    self['permissions'].setdefault('group', None)
+
+    if not 'path' in self:
+      raise ManifestError("output is missing a 'path' field")
+
+
+  @property
+  def permissions_dir_mode(self):
+    """ Return the dir mode configured, if any, in octal """
+    dm = self['permissions']['dir_mode']
+    return None if dm is None else int(dm, 8)
+
+
+  @property
+  def permissions_file_mode(self):
+    """ Return the file mode configured, if any, in octal """
+    fm = self['permissions']['file_mode']
+    return None if fm is None else int(fm, 8)
+
+
 class Manifest(dict):
   """ A dict-like object for loading, processing and testing Bulklift
-      manifests """
+      manifests.  Individual sections may be handled with specialised objects
+      that return sensible defaults for fields.  """
 
   MANIFEST_FILE_NAME = '.bulklift.yaml'
 
@@ -28,13 +64,15 @@ class Manifest(dict):
 
   def __init__(self, path, mapping={}, **kwargs):
     """ Create a manifest representing `path`.  Other args as for dict. """
-    if not isinstance(path, Path):
-      raise TypeError("Manifest takes pathlib.Path")
-    if not path.is_dir():
-      raise ValueError("__init__() takes reference to dir, not manifest file")
-
     super(Manifest, self).__init__(mapping, **kwargs)
     self.path = path
+
+    # Set defaults & translate some of our contents into specialized objects
+    self.setdefault('config', {})
+    self.setdefault('metadata', {})
+    self['outputs'] = {
+      n: ManifestOutput(s) for n, s in self.get('outputs', {}).items()
+    }
 
 
   @classmethod
@@ -70,7 +108,8 @@ class Manifest(dict):
     except yaml.scanner.ScannerError as e:
       raise ManifestError("Error parsing {}:\n\n{}".format(manifest_path, e))
 
-    if data.get('root', False):
+    data.setdefault('root', False)  # if not root, be explicit about it
+    if data['root']:
       manifest = Manifest(path, data)
     else:
       if path == path.parent:   # Reached / without finding a root manifest
@@ -78,7 +117,6 @@ class Manifest(dict):
       parent_manifest = cls.load(path.parent)
       new = deepcopy(parent_manifest)
       dict_deep_merge(new, data)
-      new.pop('root', None)  # it is definitely not the root
       manifest = Manifest(path, new)
     cls.MANIFEST_CACHE[path] = manifest
     return manifest
@@ -100,7 +138,7 @@ class Manifest(dict):
   def dumpTemplate(self):
     """ Try to infer the directory level we're on and produce an appropriate
         yaml template for the user to edit """
-    if self.is_root():
+    if self['root']:
       d = dict(self)
     elif self.is_music_dir():
       d = self.genTemplateForAlbum()
@@ -119,43 +157,33 @@ class Manifest(dict):
 
 
   def genTemplateForAlbum(self):
-    """ Dump yaml suitable to be used as a template for an album manifest """
+    """ Dump yaml suitable to be used as a template for an album manifest.
+        FIXME: remove transcoder-specific logic   """
     d = self.genTemplateForArtist()
     m = d.setdefault('metadata', {})
     m.setdefault('album', '')
     m.setdefault('year', '')
-    unmasked = ['codec', 'lame_vbr', 'opus_bitrate']
-    # print("outputs is {}".format(self['outputs']))
     d.setdefault('outputs', {})
     for o_name, o_spec in self['outputs'].items():
+      unmasked = ['codec',]
+      if o_spec['codec'] == 'opus':
+        unmasked += ['opus_bitrate']
+      elif o_spec['codec'] == 'lame':
+        unmasked += ['lame_vbr']
       d['outputs'][o_name] = {k:v for k,v in o_spec.items() if k in unmasked}
       d['outputs'][o_name].setdefault('enabled', True)  # for new templates default to on
     return d
 
 
-  def is_root(self):
-    return self.get('root', False)
-
-
-  @property
-  def config(self):
-    return self.get('config', {})
-
-
   @property
   def outputs(self):
-    return [(name, spec) for name, spec in self.get('outputs', {}).items()]
+    return [(name, spec) for name, spec in self['outputs'].items()]
 
 
   @property
   def outputs_enabled(self):
-    return [(name, spec) for name, spec in self.outputs if spec.get('enabled', False)]
-
-
-  @property
-  def metadata(self):
-    return self.get('metadata', {})
+    return [(name, spec) for name, spec in self['outputs'].items() if spec['enabled']]
 
 
   def is_metadata_complete(self):
-    return set(self.METADATA_REQUIRED).issubset(set(self.metadata.keys()))
+    return set(self.METADATA_REQUIRED).issubset(set(self['metadata'].keys()))
