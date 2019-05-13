@@ -41,9 +41,12 @@ class TranscoderBase(object):
     self.config = config
 
     try:
-      self.thread_count = len(os.sched_getaffinity(0))
-    except AttributeError:
-      self.thread_count = os.cpu_count()
+      self.thread_count = config['ffmpeg']['threads']
+    except KeyError:
+      try:
+        self.thread_count = len(os.sched_getaffinity(0))
+      except AttributeError:
+        self.thread_count = os.cpu_count()
 
     # Determine where our output is going
     self.output_path = Path(os.path.expandvars(self.output_spec['path'])).resolve()
@@ -163,15 +166,16 @@ class TranscoderBase(object):
     """ Run the r128gain tool over the completed output dir """
     cmd = [
       self.r128gain_path,
-      '--ffmpeg-path', self.ffmpeg_path,
-      '--opus-output-gain',
-      '--thread-count', str(self.thread_count),
-      '--recursive',
-      '--verbosity', 'warning',
-      str(self.output_album_path)
+      '--recursive', '--ffmpeg-path', self.ffmpeg_path,
+      '--opus-output-gain', '--verbosity', 'warning',
     ]
     if self.output_spec['gain']['album']:
-      cmd.insert(1, '--album-gain')
+      cmd += ['--album-gain']
+    try:
+      cmd += ['--thread-count', str(self.config['r128gain']['threads'])]
+    except KeyError:
+      pass
+    cmd += [str(self.output_album_path)]
     puts("Running r128gain on output dir (album: {})".format(
       self.output_spec['gain']['album'])
     )
