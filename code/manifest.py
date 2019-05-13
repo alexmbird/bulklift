@@ -4,13 +4,24 @@ from pathlib import Path
 
 from clint.textui import puts, colored
 
-from util import dict_deep_merge
+from util import dict_deep_merge, available_cpu_count
 from transcoders import TRANSCODE_TYPES
 
 
 
 class ManifestError(Exception):
   "Problem reading or parsing a manifest file"
+
+
+class ManifestConfig(dict):
+  """ Dict-like representing core config, with sensible defaults """
+  def __init__(self, *args, **kwargs):
+    super(ManifestConfig, self).__init__(*args, **kwargs)
+    self.setdefault('binaries', {})  # see _getBinary()
+    self.setdefault('r128gain', {})
+    self['r128gain'].setdefault('threads', None)
+    self.setdefault('ffmpeg', {})
+    self['ffmpeg'].setdefault('threads', available_cpu_count())
 
 
 class ManifestOutput(dict):
@@ -68,7 +79,7 @@ class Manifest(dict):
     self.path = path
 
     # Set defaults & translate some of our contents into specialized objects
-    self.setdefault('config', {})
+    self['config'] = ManifestConfig(self.get('config', {}))
     self.setdefault('metadata', {})
     self['outputs'] = {
       n: ManifestOutput(s) for n, s in self.get('outputs', {}).items()

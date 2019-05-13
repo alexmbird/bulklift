@@ -40,14 +40,6 @@ class TranscoderBase(object):
     self.output_spec = output_spec
     self.config = config
 
-    try:
-      self.thread_count = config['ffmpeg']['threads']
-    except KeyError:
-      try:
-        self.thread_count = len(os.sched_getaffinity(0))
-      except AttributeError:
-        self.thread_count = os.cpu_count()
-
     # Determine where our output is going
     self.output_path = Path(os.path.expandvars(self.output_spec['path'])).resolve()
     self.output_album_path = self.output_path / self.OUTPUT_DIR_TEMPLATE.format(**self.metadata)
@@ -148,7 +140,7 @@ class TranscoderBase(object):
     def _tc(source_p):
       puts("Transcoding '{}'".format(source_p.name))
       return subprocess.run(self.buildTranscodeCmd(source_p))
-    with ThreadPoolExecutor(max_workers=self.thread_count) as pool:
+    with ThreadPoolExecutor(max_workers=self.config['ffmpeg']['threads']) as pool:
       futures = [pool.submit(_tc, p) for p in files_transcode]
       try:
         for future in as_completed(futures):
@@ -171,10 +163,8 @@ class TranscoderBase(object):
     ]
     if self.output_spec['gain']['album']:
       cmd += ['--album-gain']
-    try:
+    if self.config['r128gain']['threads'] is not None:
       cmd += ['--thread-count', str(self.config['r128gain']['threads'])]
-    except KeyError:
-      pass
     cmd += [str(self.output_album_path)]
     puts("Running r128gain on output dir (album: {})".format(
       self.output_spec['gain']['album'])

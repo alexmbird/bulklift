@@ -1,6 +1,6 @@
 import unittest
 
-from util import dict_not_nulls
+from util import dict_not_nulls, available_cpu_count
 
 
 class TestDictNotNulls(unittest.TestCase):
@@ -13,3 +13,13 @@ class TestDictNotNulls(unittest.TestCase):
     assert 'c' not in d1
     assert 'd' not in d1
     assert 'e' in d1
+
+
+class TestCpuCount(unittest.TestCase):
+
+  def test_available_cpu_count(self):
+    "available_cpu_count() returns a number of cpus"
+    cc = available_cpu_count()
+    assert cc > 0
+    assert cc == int(cc)
+

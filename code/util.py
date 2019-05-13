@@ -24,3 +24,11 @@ def dict_not_nulls(d, unwanted=(None, {}, [])):
     if v not in unwanted:
       new[k] = v
   return new
+
+
+def available_cpu_count():
+  """ Return a sensible estimate for the max. number of cores available """
+  try:
+    return len(os.sched_getaffinity(0))
+  except AttributeError:
+    return os.cpu_count()
