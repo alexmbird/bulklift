@@ -127,5 +127,5 @@ if __name__ == '__main__':
     if args.debug:
       raise
     else:
-      puts(colored.red(str(e)))
+      puts(colored.red("Fatal: {}".format(e)))
       sys.exit(1)

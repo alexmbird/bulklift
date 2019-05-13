@@ -19,6 +19,10 @@ TRANSCODE_TYPES = ('.flac', '.mp3', '.m4a', '.opus')
 PRESERVE_TYPES = ('.gif', '.jpg', '.jpeg', '.png')
 
 
+class TranscodingError(Exception):
+  "Failure within a transcoding job"
+
+
 class TranscoderBase(object):
 
   OUTPUT_DIR_TEMPLATE = "{genre}/{artist}/{year} {album}"
@@ -95,7 +99,7 @@ class TranscoderBase(object):
     """ Make the output dir we'll be transcoding content into """
     shutil.rmtree(str(self.output_album_path), ignore_errors=True)
     self.output_album_path.mkdir(self.output_dir_mode, parents=True, exist_ok=True)
-    puts("Created dest dir '{}'".format(self.output_album_path.name))
+    puts("Created dest dir '{}'".format(self.output_album_path))
 
 
   def transcode(self):
@@ -108,7 +112,7 @@ class TranscoderBase(object):
       self.r128gain()
       self.writeSignatures()
       self.setOutputPermissions()
-    except Exception:
+    except Exception as e:
       puts(colored.red("Transcoding failed; unlinking output path"))
       shutil.rmtree(str(self.output_album_path), ignore_errors=True)
       raise
@@ -129,7 +133,7 @@ class TranscoderBase(object):
     """ Copy static content (e.g. album art) into the output dir """
     for path_src in self.sourcePreservedFiles():
       path_dst = self.output_album_path / path_src.name
-      puts("Copying '{}' -> '{}'".format(path_src, path_dst))
+      puts("Copying '{}'".format(path_src.name))
       shutil.copy(
         str(path_src),
         str(path_dst)
@@ -148,19 +152,25 @@ class TranscoderBase(object):
 
 
   def transcodeMediaFiles(self):
+    """ Using a ffmpeg command supplied by the Transcoder* implementation
+        transcode the relevant set of media files, running multiple transcoders
+        in parallel if desired.  """
     files_transcode = self.sourceMediaFiles()
+    def _tc(source_p):
+      puts("Transcoding '{}'".format(source_p.name))
+      return subprocess.run(self.buildTranscodeCmd(source_p))
     with ThreadPoolExecutor(max_workers=self.thread_count) as pool:
-      futures = [
-        pool.submit(subprocess.run, self.buildTranscodeCmd(p))
-        for p in files_transcode
-      ]
-      for future in as_completed(futures):
-        cp = future.result()
-        head, tail = os.path.split(cp.args[-1])
-        if cp.returncode == 0:
-          puts("Transcoded '{}'".format(tail))
-        else:
-          puts(colored.red("Failed '{}'".format(tail)))
+      futures = [pool.submit(_tc, p) for p in files_transcode]
+      try:
+        for future in as_completed(futures):
+          cp = future.result()
+          if cp.returncode != 0:
+            puts(colored.red("Failed '{}'".format(Path(cp.args[-1]).name)))
+      except KeyboardInterrupt as e:
+        for future in futures:
+          future.cancel()
+        # Re-raising the exception blows up threading real bad.  Make new one.
+        raise TranscodingError("Keyboard interrupt; aborted transcoding")
 
 
   def r128gain(self):
@@ -177,11 +187,14 @@ class TranscoderBase(object):
     if self.r128gain_album:
       cmd.insert(1, '--album-gain')
     puts("Running r128gain on output dir")
-    cp = subprocess.run(cmd)
+    try:
+      cp = subprocess.run(cmd)
+    except KeyboardInterrupt:
+      raise TranscodingError("Keyboard interrupt; aborted transcoding")
     if cp.returncode == 0:
       puts("Added replaygain tags")
     else:
-      puts(colored.red("Failed to add replaygain tags"))
+      raise TranscodingError("Failed to add replaygain tags")
 
 
   def setOutputPermissions(self):
