@@ -105,7 +105,7 @@ sp_edit.set_defaults(func=cmd_edit)
 sp_edit.add_argument('dir', nargs='?', default='.',
                      help="path to *directory* whose manifest to edit")
 
-sp_sigs = subparsers.add_parser('addsigs', help="add .bulklift.sig files to targets missing one")
+sp_sigs = subparsers.add_parser('rewrite-sigs', help="(re)write the .bulklift.sig files in target dirs")
 sp_sigs.set_defaults(func=cmd_addsigs)
 sp_sigs.add_argument('source_tree_root', type=str, nargs=1, default='.',
                      help="root path for your source tree; must contain a .bulklift.yaml with root=true.  Default is current dir.")
