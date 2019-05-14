@@ -32,3 +32,13 @@ def available_cpu_count():
     return len(os.sched_getaffinity(0))
   except AttributeError:
     return os.cpu_count()
+
+
+def filename_matches_globs(path, globs=[]):
+  """ Return True if the *filename* at end of `path` matches any of the
+      supplied list of glob patterns  """
+  f = path.relative_to(path.parent)
+  for g in globs:
+    if f.match(g):
+      return True
+  return False

@@ -16,6 +16,7 @@ Features:
 -  Inheritable, per-directory config system makes it a breeze to setup
 -  Manifests are just text files stored alongside your music; no database to corrupt or lose
 -  Toggle the output tree(s) a source album will be transcoded to.  Want only half of Lady Gaga's albums on your phone?  With each at a different bitrate?  Done.
+-  Include/exclude specific tracks based upon filename globbing.  Only want disc 1 of a 3-disc set?  Simply include `1-*.flac`.
 -  Copies album art (gif, png, jpg) unmolested to the output directory
 -  Passthrough `copy` format to copy files without re-encoding
 -  Multithreading (4x faster on my Raspberry Pi media server)
@@ -111,6 +112,8 @@ Some of the more common options...
 | `outputs.<name>.codec_version` | - | `v1.3.2` | Arbitrary string you can use to identify the version of the codec used to generate targets.  This is used to form part of the target signature; change it when you update your codec to trigger re-transcoding with the new version.  |
 | `outputs.<name>.opus_bitrate`| - | `128k` | Bitrate to use for libopus.  Encoding is VBR so results are approximate. |
 | `outputs.<name>.lame_vbr`| - | `3` | VBR setting for libmp3lame.  Encoding is VBR so results are approximate. |
+| `outputs.<name>.filters.include` | - | `["1-*.flac"]` | List of globs that audio files must match to be included.  Applied before any `exclude` filters.  Use a filter like `1*` to transcode only the first disc of a two-album set.  |
+| `outputs.<name>.filters.exclude` | - | `["*track_i_do_not_like.flac"]` | List of globs audio files must *not* match to be included.  Applied after `include` filters.  |
 | `metadata.*`| Y | - | Mapping of metadata to use for the content.  To avoid repetition you can build this up level by level - see the [examples](examples/) for how. |
 
 Bulklift will interpolate environment variables used within paths, e.g. `${HOME}/media/target_devices/mp3_player`.

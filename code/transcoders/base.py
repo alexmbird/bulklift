@@ -10,7 +10,7 @@ from copy import deepcopy
 
 from clint.textui import indent, puts, colored
 
-from util import dict_not_nulls
+from util import dict_not_nulls, filename_matches_globs
 
 
 # Filetypes that can be transcoded
@@ -123,12 +123,27 @@ class TranscoderBase(object):
   def sourceMediaFiles(self):
     """ Return a list of files in the source directory that we should
         transcode.  Sorted so a change in filesystem can't change the hash. """
-    return sorted([
+    candidates = [
       p for p in self.source.path.iterdir()
       if p.is_file()
         and p.suffix in TRANSCODE_TYPES
         and not p.name.startswith('.')
-    ])
+    ]
+
+    # Include only files matching the include glob(s)
+    f_include = self.output_spec['filters']['include']
+    if f_include:
+      candidates = [c for c in candidates if filename_matches_globs(c, f_include)]
+
+    # Filter out any files matching the exclude globs
+    f_exclude = self.output_spec['filters']['exclude']
+    if f_exclude:
+      candidates = [c for c in candidates if not filename_matches_globs(c, f_exclude)]
+
+    # Fin!  Return sorted descending by size, so we process the largest files
+    # first.  This makes the most efficient use of all our cores by retaining
+    # the smallest jobs to be fed into spare processors at the end.
+    return sorted(candidates, key=lambda c: c.stat().st_size, reverse=True)
 
 
   def transcodeMediaFiles(self):

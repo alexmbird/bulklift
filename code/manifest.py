@@ -47,7 +47,9 @@ class ManifestOutput(dict):
     self['permissions'].setdefault('file_mode', None)
     self['permissions'].setdefault('user', None)
     self['permissions'].setdefault('group', None)
-
+    self.setdefault('filters', {})
+    self['filters'].setdefault('include', [])
+    self['filters'].setdefault('exclude', [])
     if not 'path' in self:
       raise ManifestError("output is missing a 'path' field")
 
