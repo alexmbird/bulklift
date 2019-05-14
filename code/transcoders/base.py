@@ -156,6 +156,7 @@ class TranscoderBase(object):
 
   def r128gain(self):
     """ Run the r128gain tool over the completed output dir """
+    r128_threads = self.config['r128gain']['threads']
     cmd = [
       self.r128gain_path,
       '--recursive', '--ffmpeg-path', self.ffmpeg_path,
@@ -163,12 +164,13 @@ class TranscoderBase(object):
     ]
     if self.output_spec['gain']['album']:
       cmd += ['--album-gain']
-    if self.config['r128gain']['threads'] is not None:
-      cmd += ['--thread-count', str(self.config['r128gain']['threads'])]
+    if r128_threads is not None:
+      cmd += ['--thread-count', str(r128_threads)]
     cmd += [str(self.output_album_path)]
-    puts("Running r128gain on output dir (album: {})".format(
-      self.output_spec['gain']['album'])
-    )
+    puts("Running r128gain on output dir (album:{}, threads:{})".format(
+      self.output_spec['gain']['album'],
+      r128_threads if r128_threads is not None else '?'
+    ))
     try:
       cp = subprocess.run(cmd)
     except KeyboardInterrupt:
