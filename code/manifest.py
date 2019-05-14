@@ -15,6 +15,10 @@ class ManifestError(Exception):
 
 class ManifestConfig(dict):
   """ Dict-like representing core config, with sensible defaults """
+
+  # Suitable for most things by an artist; override for mixes & soundtracks
+  DFL_ALBUM_DIR_TEMPLATE = "{genre}/{artist}/{year} {album}"
+
   def __init__(self, *args, **kwargs):
     super(ManifestConfig, self).__init__(*args, **kwargs)
     self.setdefault('binaries', {})  # see _getBinary()
@@ -22,10 +26,13 @@ class ManifestConfig(dict):
     self['r128gain'].setdefault('threads', None)
     self.setdefault('ffmpeg', {})
     self['ffmpeg'].setdefault('threads', available_cpu_count())
+    self.setdefault('target', {})
+    self['target'].setdefault('album_dir', self.DFL_ALBUM_DIR_TEMPLATE)
 
 
 class ManifestOutput(dict):
   """ Dict-like representing an output, with sensible defaults """
+
   def __init__(self, *args, **kwargs):
     super(ManifestOutput, self).__init__(*args, **kwargs)
     self.setdefault('codec', 'null')

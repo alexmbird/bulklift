@@ -27,9 +27,7 @@ class TranscodingError(Exception):
 class TranscoderBase(object):
 
   SIGNATURE_FILE_NAME = '.bulklift.sig'
-  OUTPUT_DIR_TEMPLATE = "{genre}/{artist}/{year} {album}"
   FILE_EXTENSION = 'test'
-  MANDATORY_SPEC_FIELDS = ('codec', 'enabled')
 
 
   def __init__(self, source, metadata, output_name, output_spec, config):
@@ -42,7 +40,8 @@ class TranscoderBase(object):
 
     # Determine where our output is going
     self.output_path = Path(os.path.expandvars(self.output_spec['path'])).resolve()
-    self.output_album_path = self.output_path / self.OUTPUT_DIR_TEMPLATE.format(**self.metadata)
+    album_dir = self.config['target']['album_dir'].format(**self.metadata)
+    self.output_album_path = self.output_path / album_dir
 
     # Find the binaries we will call.  If missing, better to find out before
     # starting a lengthy transcode job.
