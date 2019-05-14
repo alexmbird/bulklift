@@ -12,7 +12,7 @@
 -   [X] <strike>Filters to include/exclude files from a dir by list/glob</strike>
 -   [X] <strike>Process media files in reverse order of size, which keeps back the smallest ones to feed cores at the end of the job</strike>
 -   [ ] `gain` setting makes more sense under `config` than per-target
--   [ ] BUGFIX: chown/chmod whole target tree(s) at end of run; doing individual dirs misses out any parent dirs created with `Path.mkdir(parents=True)`
+-   [ ] QUALITY: use a `TargetTree` object to handle chown/chmod/cleanup
 -   [ ] Transcode for only one target in a single run.  This fits the model of updating a media library on an occasionally-connected device, e.g. a phone mounted with fuse-mtp.
 -   [ ] Check manifest content in test mode, not just yaml parsing
 -   [ ] Test new manifests after they get created in edit mode

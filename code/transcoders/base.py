@@ -24,6 +24,10 @@ class TranscodingError(Exception):
   "Failure within a transcoding job"
 
 
+class MetadataError(KeyError):
+  "A required piece of metadata was absent"
+
+
 class TranscoderBase(object):
 
   SIGNATURE_FILE_NAME = '.bulklift.sig'
@@ -40,7 +44,10 @@ class TranscoderBase(object):
 
     # Determine where our output is going
     self.output_path = Path(os.path.expandvars(self.output_spec['path'])).resolve()
-    album_dir = self.config['target']['album_dir'].format(**self.metadata)
+    try:
+      album_dir = self.config['target']['album_dir'].format(**metadata)
+    except KeyError:
+      raise MetadataError("{} has malformed metadata: {}".format(self.source.path, metadata))
     self.output_album_path = self.output_path / album_dir
 
     # Find the binaries we will call.  If missing, better to find out before
