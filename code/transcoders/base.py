@@ -90,7 +90,7 @@ class TranscoderBase(object):
     puts("Created dest dir '{}'".format(self.output_album_path))
 
 
-  def transcode(self):
+  def transcode(self, retain_on_fail=False):
     """ Create the appropriate version of the content """
     puts("Transcoding album from {}".format(self.source.path))
     self.makeOutputDir()
@@ -100,8 +100,11 @@ class TranscoderBase(object):
       self.r128gain()
       self.writeSignatures()
     except Exception as e:
-      puts(colored.red("Transcoding failed; unlinking output path"))
-      shutil.rmtree(str(self.output_album_path), ignore_errors=True)
+      if retain_on_fail:
+        puts(colored.red("Won't delete broken target dir in --debug mode; be sure to tidy it up manually"))
+      else:
+        puts(colored.red("Transcoding failed; unlinking output path"))
+        shutil.rmtree(str(self.output_album_path), ignore_errors=True)
       raise
 
 
@@ -185,8 +188,8 @@ class TranscoderBase(object):
     ]
     if self.output_spec['gain']['album']:
       cmd += ['--album-gain']
-    if r128_threads is not None:
-      cmd += ['--thread-count', str(r128_threads)]
+    # if r128_threads is not None:
+    #   cmd += ['--thread-count', str(r128_threads)]
     cmd += [str(self.output_album_path)]
     puts("Running r128gain on output dir (album:{}, threads:{})".format(
       self.output_spec['gain']['album'],

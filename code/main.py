@@ -24,7 +24,7 @@ def cmd_transcode(args):
   for n, t in enumerate(targets):
     puts("{} ({} of {})".format(t, n+1, len(targets)+1))
     with indent(2):
-      t.transcode()
+      t.transcode(retain_on_fail=args.debug)
       puts()
   if args.noclean:
     puts("Skipping cleanup of redundant targets")

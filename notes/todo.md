@@ -11,8 +11,16 @@
 -   [X] <strike>Override template used to generate target album path from metadata; the default one doesn't suit mixes & soundtracks</strike>
 -   [X] <strike>Filters to include/exclude files from a dir by list/glob</strike>
 -   [X] <strike>Process media files in reverse order of size, which keeps back the smallest ones to feed cores at the end of the job</strike>
+-   [ ] BUGFIX: Recognise .ogg as an audio format
 -   [ ] `gain` setting makes more sense under `config` than per-target
 -   [ ] QUALITY: use a `TargetTree` object to handle chown/chmod/cleanup
+-   [ ] QUALITY: type hinting
+-   [ ] QUALITY: f-strings for readability
+-   [ ] QUALITY: `functools.lru_cache` for loading manifests
+-   [ ] FEATURE: "virtual" sources.  Run an external command (e.g. `wget ...`) to get media from elsewhere
+-   [ ] FEATURE: config param for size of target and alert when it has been exceeded
+-   [ ] FEATURE: fix output filenames for fat32
+-   [ ] QUALITY: make signatures less sensitive to changes in yaml formatting
 -   [ ] Transcode for only one target in a single run.  This fits the model of updating a media library on an occasionally-connected device, e.g. a phone mounted with fuse-mtp.
 -   [ ] Check manifest content in test mode, not just yaml parsing
 -   [ ] Test new manifests after they get created in edit mode
