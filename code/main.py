@@ -21,8 +21,8 @@ def cmd_transcode(args):
   """ Find any outstanding transcoding jobs and action them """
   tree_root = MediaSourceRoot(Path(args.source_tree_root[0]))
   targets = [t for t in tree_root.targets() if t.is_stale()]
-  for t in targets:
-    puts("{}".format(t))
+  for n, t in enumerate(targets):
+    puts("{} ({} of {})".format(t, n, len(targets)))
     with indent(2):
       t.transcode()
       puts()
