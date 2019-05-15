@@ -14,7 +14,7 @@ from util import dict_not_nulls, filename_matches_globs, vfat_sanitize
 
 
 # Filetypes that can be transcoded
-TRANSCODE_TYPES = ('.flac', '.mp3', '.m4a', '.opus')
+TRANSCODE_TYPES = ('.flac', '.mp3', '.ogg', '.m4a', '.opus')
 
 # Filetypes that will be directly copied - typically album art
 PRESERVE_TYPES = ('.gif', '.jpg', '.jpeg', '.png')
