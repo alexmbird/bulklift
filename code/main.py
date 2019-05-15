@@ -22,7 +22,7 @@ def cmd_transcode(args):
   tree_root = MediaSourceRoot(Path(args.source_tree_root[0]))
   targets = [t for t in tree_root.targets() if t.is_stale()]
   for n, t in enumerate(targets):
-    puts("{} ({} of {})".format(t, n, len(targets)))
+    puts("{} ({} of {})".format(t, n+1, len(targets)+1))
     with indent(2):
       t.transcode()
       puts()
