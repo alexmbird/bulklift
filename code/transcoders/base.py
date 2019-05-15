@@ -10,7 +10,7 @@ from copy import deepcopy
 
 from clint.textui import indent, puts, colored
 
-from util import dict_not_nulls, filename_matches_globs
+from util import dict_not_nulls, filename_matches_globs, vfat_sanitize
 
 
 # Filetypes that can be transcoded
@@ -31,7 +31,11 @@ class MetadataError(KeyError):
 class TranscoderBase(object):
 
   SIGNATURE_FILE_NAME = '.bulklift.sig'
-  FILE_EXTENSION = 'test'
+  FILE_EXTENSION = '.test'
+  SANITIZERS = {
+    'vfat': vfat_sanitize,
+    None: lambda p: p
+  }
 
 
   def __init__(self, source, metadata, output_name, output_spec, config):
@@ -42,10 +46,16 @@ class TranscoderBase(object):
     self.output_spec = output_spec
     self.config = config
 
-    # Determine where our output is going
+    # Function used to sanitize target paths; this allows us to guarantee files
+    # will be suitable for a USB stick / mp3 player.
+    self.sanitize_path = self.SANITIZERS.get(output_spec['sanitize_paths'])
+
+    # Determine where our output is going.  Not sanitized.
     self.output_path = Path(os.path.expandvars(self.output_spec['path'])).resolve()
     try:
-      album_dir = self.config['target']['album_dir'].format(**metadata)
+      album_dir = self.sanitize_path(
+        self.config['target']['album_dir'].format(**metadata)
+      )
     except KeyError:
       raise MetadataError("{} has malformed metadata: {}".format(self.source.path, metadata))
     self.output_album_path = self.output_path / album_dir
@@ -78,9 +88,13 @@ class TranscoderBase(object):
     return found
 
 
-  def outputFileName(self, source_file):
-    pre, ext = os.path.splitext(source_file)
-    return '.'.join([pre, self.FILE_EXTENSION])
+  def outputFilePath(self, source_path):
+    """ Transform the input filename into one suitable for the output
+        codec/media, including leading path.  """
+    source_path = Path(source_path)  # support strings + pathlib.Path
+    if self.FILE_EXTENSION is not None:
+      source_path = source_path.with_suffix(self.FILE_EXTENSION)
+    return self.output_album_path / self.sanitize_path(source_path.name)
 
 
   def makeOutputDir(self):

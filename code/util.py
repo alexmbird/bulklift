@@ -1,7 +1,8 @@
 import collections
 import os
 import os.path
-import enum
+from pathlib import Path
+import string
 
 
 def dict_deep_merge(a, b):
@@ -42,3 +43,10 @@ def filename_matches_globs(path, globs=[]):
     if f.match(g):
       return True
   return False
+
+
+def vfat_sanitize(path):
+  """ Return a version of `path` sanitized for fat32/vfat filesystems.  '/' is
+      not valid in fat32 filenames but we permit it as a dir specifier.   """
+  invalid = '?<>\\:*|"'
+  return Path(''.join([v if v not in invalid else '_' for v in str(path)]))

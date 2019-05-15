@@ -1,6 +1,7 @@
 import unittest
+from pathlib import Path
 
-from util import dict_not_nulls, available_cpu_count
+from util import dict_not_nulls, available_cpu_count, vfat_sanitize
 
 
 class TestDictNotNulls(unittest.TestCase):
@@ -23,3 +24,11 @@ class TestCpuCount(unittest.TestCase):
     assert cc > 0
     assert cc == int(cc)
 
+
+class TestFat32Sanitize(unittest.TestCase):
+
+  def test_fat32_sanitize(self):
+    "Sanitize filenames for vfat"
+    self.assertEqual(vfat_sanitize(Path('/this/is/fine')), Path('/this/is/fine'))
+    self.assertEqual(vfat_sanitize(Path('/this/<s/?not')), Path('/this/_s/_not'))
+    self.assertEqual(vfat_sanitize('/this/>s/?not'), Path('/this/_s/_not'))

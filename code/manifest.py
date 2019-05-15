@@ -35,6 +35,7 @@ class ManifestOutput(dict):
 
   def __init__(self, *args, **kwargs):
     super(ManifestOutput, self).__init__(*args, **kwargs)
+    self.setdefault('sanitize_paths', None)
     self.setdefault('codec', 'null')
     self.setdefault('enabled', False)
     self.setdefault('codec_version', None)

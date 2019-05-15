@@ -3,13 +3,12 @@ from transcoders.base import TranscoderBase
 
 class TranscoderOpus(TranscoderBase):
 
-  FILE_EXTENSION = 'opus'
+  FILE_EXTENSION = '.opus'
   COMMENT = "Bulklift 0.1 (ffmpeg + libopus)"
 
 
   def buildTranscodeCmd(self, source_path):
     """ Return a command appropriate for transcoding the specified file """
-    target_path = self.output_album_path / self.outputFileName(source_path.name)
     return [
       self.ffmpeg_path,
       '-y', '-loglevel', 'error',
@@ -23,7 +22,7 @@ class TranscoderOpus(TranscoderBase):
       '-id3v2_version', '3',
       '-write_id3v1', '1',
       '-metadata', 'comment={}'.format(self.COMMENT),
-      str(target_path)
+      str(self.outputFilePath(source_path.name))
     ]
 
 
