@@ -258,7 +258,7 @@ class TranscoderBase(object):
         if the selected function is changed.
     """
     paths = self.sourcePreservedFiles() + self.sourceMediaFiles()
-    name_mtimes = [(self.sanitize_path(p.name), p.stat().st_mtime) for p in paths]
+    name_mtimes = [(str(self.sanitize_path(p.name)), p.stat().st_mtime) for p in paths]
     return sorted(name_mtimes)
 
 
