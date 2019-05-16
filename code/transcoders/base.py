@@ -253,10 +253,12 @@ class TranscoderBase(object):
     """ Return a string representing the contents of files that will be
         transcoded.  This can be used to detect when the target is outdated and
         needs regenerating.  Rather than hashing terabytes of media on every
-        run we use the name + mtime of the file.  Move your library with care!
+        run we use the name + mtime of the file.  Name is run through any
+        user-selected sanitizing function so that targets will be regenerated
+        if the selected function is changed.
     """
     paths = self.sourcePreservedFiles() + self.sourceMediaFiles()
-    name_mtimes = [(p.name, p.stat().st_mtime) for p in paths]
+    name_mtimes = [(self.sanitize_path(p.name), p.stat().st_mtime) for p in paths]
     return sorted(name_mtimes)
 
 

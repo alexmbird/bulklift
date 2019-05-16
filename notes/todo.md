@@ -13,9 +13,10 @@
 -   [X] <strike>Process media files in reverse order of size, which keeps back the smallest ones to feed cores at the end of the job</strike>
 -   [X] <strike>FEATURE: fix output filenames for vfat</strike>
 -   [X] <strike>BUGFIX: Recognise .ogg as an audio format</strike>
--   [ ] IMPROVEMENT: use dest filename in signature; vfat sanitization might cause it to change
+-   [X] <strike>IMPROVEMENT: use dest filename in signature; vfat sanitization might cause it to change</strike>
 -   [ ] `gain` setting makes more sense under `config` than per-target
 -   [ ] QUALITY: use a `TargetTree` object to handle chown/chmod/cleanup
+-   [ ] FEATURE: Optionally overwrite metadata in target files with `format()`-ed metadata fields (example: strip track numbers from a dir of random files)
 -   [ ] QUALITY: type hinting
 -   [ ] QUALITY: f-strings for readability
 -   [ ] QUALITY: `functools.lru_cache` for loading manifests
@@ -25,7 +26,6 @@
 -   [ ] Transcode for only one target in a single run.  This fits the model of updating a media library on an occasionally-connected device, e.g. a phone mounted with fuse-mtp.
 -   [ ] Check manifest content in test mode, not just yaml parsing
 -   [ ] Test new manifests after they get created in edit mode
--   [ ] Optionally overwrite metadata in output
 -   [ ] Extra output formats (m4a)
 -   [ ] Release on PyPy
 -   [ ] Static release builds
