@@ -21,11 +21,13 @@ class ManifestConfig(dict):
 
   def __init__(self, *args, **kwargs):
     super(ManifestConfig, self).__init__(*args, **kwargs)
-    self.setdefault('binaries', {})  # see _getBinary()
+    self.setdefault('transcoding', {})  # see _getBinary()
+    self['transcoding'].setdefault('ffmpeg_path', None)
+    self['transcoding'].setdefault('threads', available_cpu_count())
     self.setdefault('r128gain', {})
+    self['r128gain'].setdefault('r128gain_path', None)
+    self['r128gain'].setdefault('ffmpeg_path', None)
     self['r128gain'].setdefault('threads', None)
-    self.setdefault('ffmpeg', {})
-    self['ffmpeg'].setdefault('threads', available_cpu_count())
     self.setdefault('target', {})
     self['target'].setdefault('album_dir', self.DFL_ALBUM_DIR_TEMPLATE)
 

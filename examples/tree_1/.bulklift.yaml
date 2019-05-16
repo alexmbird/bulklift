@@ -5,13 +5,13 @@
 root: true
 
 
-config:
-
-  # If unspecified Bulklift will search $PATH
-  binaries: {}
-    # ffmpeg: /usr/bin/ffmpeg
-    # r128gain: /usr/local/bin/r128gain
-
+config: {}
+  # transcoding:
+  #   ffmpeg_path: /usr/bin/ffmpeg
+  #   # threads: 3
+  # r128gain:
+  #   r128gain_path: ${HOME}/Projects/personal/bulklift/venv/bin/r128gain
+  #   # threads: 3
 
 
 

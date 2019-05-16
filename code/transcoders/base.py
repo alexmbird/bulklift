@@ -62,8 +62,18 @@ class TranscoderBase(object):
 
     # Find the binaries we will call.  If missing, better to find out before
     # starting a lengthy transcode job.
-    self.ffmpeg_path = self._getBinary('ffmpeg')
-    self.r128gain_path = self._getBinary('r128gain')
+    self.transcode_ffmpeg_path = self._getBinary(
+      [config['transcoding']['ffmpeg_path']], 'ffmpeg'
+    )
+    self.r128_r128gain_path = self._getBinary(
+      [config['r128gain']['r128gain_path']], 'r128gain'
+    )
+    self.r128_ffmpeg_path = self._getBinary(
+      [
+        config['r128gain']['ffmpeg_path'],
+        config['transcoding']['ffmpeg_path']
+      ], 'ffmpeg'
+    )
 
     # Calculate signatures
     self.signatures = {
@@ -73,19 +83,22 @@ class TranscoderBase(object):
     }
 
 
-  def _getBinary(self, binary):
-    """ Return path to user-selected binary or first found in $PATH """
+  def _getBinary(self, candidates, system):
+    """ Either return path to a binary in list `candidates` that is not None or
+        the first instance of binary `system` found in $PATH """
+    candidates = filter(lambda c: c is not None, candidates)
     try:
-      found = os.path.expandvars(self.config['binaries'][binary])
+      found = os.path.expandvars(next(candidates))
       if not (os.path.isfile(found) and os.access(found, os.X_OK)):
         raise FileNotFoundError(
           "user-configured {} binary not present or executable".format(found)
         )
-    except KeyError:
-      found = shutil.which(binary)
-      if found is None:
-        raise FileNotFoundError("cannot find a {} binary in your path".format(binary))
-    return found
+    except StopIteration:
+      found = shutil.which(system)
+    if found is None:
+      raise FileNotFoundError("cannot find a {} binary in your path".format(binary))
+    else:
+      return found
 
 
   def outputFilePath(self, source_path):
@@ -178,7 +191,7 @@ class TranscoderBase(object):
     def _tc(source_p):
       puts("Transcoding '{}'".format(source_p.name))
       return subprocess.run(self.buildTranscodeCmd(source_p))
-    with ThreadPoolExecutor(max_workers=self.config['ffmpeg']['threads']) as pool:
+    with ThreadPoolExecutor(max_workers=self.config['transcoding']['threads']) as pool:
       futures = [pool.submit(_tc, p) for p in files_transcode]
       try:
         for future in as_completed(futures):
@@ -196,8 +209,8 @@ class TranscoderBase(object):
     """ Run the r128gain tool over the completed output dir """
     r128_threads = self.config['r128gain']['threads']
     cmd = [
-      self.r128gain_path,
-      '--recursive', '--ffmpeg-path', self.ffmpeg_path,
+      self.r128_r128gain_path,
+      '--recursive', '--ffmpeg-path', self.r128_ffmpeg_path,
       '--opus-output-gain', '--verbosity', 'warning',
     ]
     if self.output_spec['gain']['album']:

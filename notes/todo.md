@@ -13,6 +13,7 @@
 -   [X] <strike>Process media files in reverse order of size, which keeps back the smallest ones to feed cores at the end of the job</strike>
 -   [X] <strike>FEATURE: fix output filenames for vfat</strike>
 -   [X] <strike>BUGFIX: Recognise .ogg as an audio format</strike>
+-   [ ] IMPROVEMENT: use dest filename in signature; vfat sanitization might cause it to change
 -   [ ] `gain` setting makes more sense under `config` than per-target
 -   [ ] QUALITY: use a `TargetTree` object to handle chown/chmod/cleanup
 -   [ ] QUALITY: type hinting
