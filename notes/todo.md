@@ -14,6 +14,7 @@
 -   [X] <strike>FEATURE: fix output filenames for vfat</strike>
 -   [X] <strike>BUGFIX: Recognise .ogg as an audio format</strike>
 -   [X] <strike>IMPROVEMENT: use dest filename in signature; vfat sanitization might cause it to change</strike>
+-   [X] <strike>Transcode for only one target in a single run.  This fits the model of updating a media library on an occasionally-connected device, e.g. a phone mounted with fuse-mtp.</strike>
 -   [ ] `gain` setting makes more sense under `config` than per-target
 -   [ ] QUALITY: use a `TargetTree` object to handle chown/chmod/cleanup
 -   [ ] FEATURE: Optionally overwrite metadata in target files with `format()`-ed metadata fields (example: strip track numbers from a dir of random files)
@@ -23,7 +24,6 @@
 -   [ ] FEATURE: "virtual" sources.  Run an external command (e.g. `wget ...`) to get media from elsewhere
 -   [ ] FEATURE: config param for size of target and alert when it has been exceeded
 -   [ ] QUALITY: make signatures less sensitive to changes in yaml formatting
--   [ ] Transcode for only one target in a single run.  This fits the model of updating a media library on an occasionally-connected device, e.g. a phone mounted with fuse-mtp.
 -   [ ] Check manifest content in test mode, not just yaml parsing
 -   [ ] Test new manifests after they get created in edit mode
 -   [ ] Extra output formats (m4a)

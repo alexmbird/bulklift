@@ -29,21 +29,22 @@ class MediaSourceDir(object):
       yield self
 
 
-  def targets(self):
+  def targets(self, output=None):
     """ Yield transcoder jobs for this directory and its children  """
     for msd in self.walk():
       for name, spec in msd.manifest.outputs_enabled:
-        klass = TRANSCODERS[spec['codec']]
-        yield klass(
-          msd, msd.manifest['metadata'], name, spec, msd.manifest['config']
-        )
+        if name == output:
+          klass = TRANSCODERS[spec['codec']]
+          yield klass(
+            msd, msd.manifest['metadata'], name, spec, msd.manifest['config']
+          )
 
 
-  def outputAlbumPaths(self):
+  def outputAlbumPaths(self, output=None):
     """ Convenience method: list all album paths this source tree can be
         expected to generate """
     for msd in self.walk():
-      for target in msd.targets():
+      for target in msd.targets(output):
         yield target.output_album_path
 
 
@@ -61,10 +62,10 @@ class MediaSourceRoot(MediaSourceDir):
     super(MediaSourceRoot,self).__init__(path, None)
 
 
-  def cleanup(self):
+  def cleanup(self, output=None):
     """ Remove any deprecated directories from the output tree, i.e. those that
         were generated from a manifest/target that no longer exists """
-    expected_dirs = [str(p) for p in self.outputAlbumPaths()]
+    expected_dirs = [str(p) for p in self.outputAlbumPaths(output)]
     def isexpected(p):
       return any(map(
         lambda ed: ed.startswith(p), expected_dirs)
@@ -76,7 +77,7 @@ class MediaSourceRoot(MediaSourceDir):
       if not isexpected(str(victim)):
         puts(colored.red("Removing '{}'".format(victim)))
         shutil.rmtree(str(victim), ignore_errors=True)
-    for path in self.outputRootPaths():
+    for path in self.outputRootPaths(output):
       _clean(path)
 
 

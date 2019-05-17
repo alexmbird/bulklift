@@ -20,7 +20,7 @@ MIN_PYTHON_VERSION = (3,5,3)
 def cmd_transcode(args):
   """ Find any outstanding transcoding jobs and action them """
   tree_root = MediaSourceRoot(Path(args.source_tree_root[0]))
-  targets = [t for t in tree_root.targets() if t.is_stale()]
+  targets = [t for t in tree_root.targets(output=args.output) if t.is_stale()]
   for n, t in enumerate(targets):
     puts("{} ({} of {})".format(t, n+1, len(targets)+1))
     with indent(2):
@@ -29,7 +29,7 @@ def cmd_transcode(args):
   if args.noclean:
     puts("Skipping cleanup of redundant targets")
   else:
-    tree_root.cleanup()
+    tree_root.cleanup(output=args.output)
 
 
 def cmd_test(args):
@@ -37,7 +37,8 @@ def cmd_test(args):
       malformatted errors will become apparent here.  TODO: check for
       expected fields """
   tree_root = MediaSourceRoot(Path(args.source_tree_root[0]))
-  targets = list(tree_root.targets())  # discover manifest errors at the start
+  # list() means we discover manifest errors at the start
+  targets = list(tree_root.targets(output=args.output))
   for t in targets:
     puts("{}".format(t))
     with indent(2):
@@ -48,7 +49,8 @@ def cmd_test(args):
 def cmd_addsigs(args):
   """ Add .bulklift.sig files to any targets missing one """
   tree_root = MediaSourceRoot(Path(args.source_tree_root[0]))
-  targets = list(tree_root.targets())  # discover manifest errors at the start
+  # list() means we discover manifest errors at the start
+  targets = list(tree_root.targets(output=args.output))
   for t in targets:
     puts("{}".format(t))
     with indent(2):
@@ -92,11 +94,15 @@ sp_test = subparsers.add_parser('test', help="test manifests")
 sp_test.set_defaults(func=cmd_test)
 sp_test.add_argument('source_tree_root', type=str, nargs=1, default='.',
                      help="root path for your source tree; must contain a .bulklift.yaml with root=true.  Default is current dir.")
+sp_test.add_argument('--output', '-o', type=str, default=None,
+                     help="single output to work with")
 
 sp_tc = subparsers.add_parser('transcode', help="transcode audio to output trees")
 sp_tc.set_defaults(func=cmd_transcode)
 sp_tc.add_argument('--noclean', action='store_true',
                   help="skip removal of redundant albums from output tree(s)")
+sp_tc.add_argument('--output', '-o', type=str, default=None,
+                   help="single output to work with")
 sp_tc.add_argument('source_tree_root', type=str, nargs=1, default='.',
                    help="root path for your source tree; must contain a .bulklift.yaml with root=true.  Default is current dir.")
 
@@ -109,6 +115,8 @@ sp_sigs = subparsers.add_parser('rewrite-sigs', help="(re)write the .bulklift.si
 sp_sigs.set_defaults(func=cmd_addsigs)
 sp_sigs.add_argument('source_tree_root', type=str, nargs=1, default='.',
                      help="root path for your source tree; must contain a .bulklift.yaml with root=true.  Default is current dir.")
+sp_sigs.add_argument('--output', '-o', type=str, default=None,
+                     help="single output to work with")
 
 
 
