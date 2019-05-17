@@ -33,7 +33,7 @@ class MediaSourceDir(object):
     """ Yield transcoder jobs for this directory and its children  """
     for msd in self.walk():
       for name, spec in msd.manifest.outputs_enabled:
-        if name == output:
+        if output in (None, name):
           klass = TRANSCODERS[spec['codec']]
           yield klass(
             msd, msd.manifest['metadata'], name, spec, msd.manifest['config']
