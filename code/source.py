@@ -81,10 +81,9 @@ class MediaSourceRoot(MediaSourceDir):
       _clean(path)
 
 
-  def outputRootPaths(self):
-    """ Convenience: return all target tree roots covered by this MSD, enabled
-        or not.  """
-    return [
-      Path(os.path.expandvars(spec['path']))
-      for name, spec in self.manifest.outputs
-    ]
+  def outputRootPaths(self, output):
+    """ Convenience: yield all selected target tree roots covered by this MSD,
+        enabled or not.  """
+    for name, spec in self.manifest.outputs:
+      if output in (None, name):
+        yield Path(os.path.expandvars(spec['path']))
