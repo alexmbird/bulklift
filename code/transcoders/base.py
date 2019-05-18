@@ -125,7 +125,6 @@ class TranscoderBase(object):
     try:
       self.copyPreservedFiles()
       self.transcodeMediaFiles()
-      # import sys; sys.exit(0)
       self.r128gain()
       self.writeSignatures()
     except Exception as e:
@@ -243,22 +242,13 @@ class TranscoderBase(object):
     """ Generate a list of options suitable for feeding into ffmpeg.  This will
         instantiate any changes to metadata required by user's manfiest. """
     none_to_str = lambda s: '' if s is None else s
-    opts = [
-      # '-map_metadata:g', '-1:g',
-      # '-map_metadata:s:a:0', '-1:s:a',
-      # '-map_metadata:s:v:0', '-1:s:v',
-      # '-map_metadata:g', '0',
-      # '-map_metadata:s:a:0', '0:s:a',
-    ]
     metadata_cli = {k : none_to_str(v) for k, v in self.metadata.items()}
+    opts = []
     for k, v in self.config['transcoding']['rewrite_metadata'].items():
       # Passed directly to subprocess.run(), no need for shell escaping
-      if v is None:
-        opts += ['-metadata', "{}=".format(k)]
-        opts += ['-metadata:s:a', "{}=".format(k)]
-      else:
-        opts += ['-metadata', "{}=\"{}\"".format(k, v.format(metadata_cli))]
-        opts += ['-metadata:s:a', "{}=\"{}\"".format(k, v.format(metadata_cli))]
+      if v is not None:
+        opts += ['-metadata', "{}={}".format(k, v.format(metadata_cli))]
+        opts += ['-metadata:s:a', "{}={}".format(k, v.format(metadata_cli))]
     opts += ['-id3v2_version', '3']
     opts += ['-write_id3v1', '1']
     opts += ['-write_xing', '1']

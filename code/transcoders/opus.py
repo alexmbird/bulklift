@@ -14,12 +14,13 @@ class TranscoderOpus(TranscoderBase):
       '-y', '-loglevel', 'error',
       '-i', str(source_path),
       '-map', '0:a',
+      '-map', '0:v?',  # typically embedded artwork
       '-codec:a', 'libopus',
-      *self.ffmpegMetadataOptions(),
       '-codec:v', 'copy',
       '-compression_level', '10', # Slowest encode, highest quality
       '-vbr', 'on',
       '-b:a', str(self.output_spec['opus_bitrate']),
+      *self.ffmpegMetadataOptions(),
       str(self.outputFilePath(source_path.name))
     ]
 

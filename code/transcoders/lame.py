@@ -14,10 +14,11 @@ class TranscoderLame(TranscoderBase):
       '-y', '-loglevel', 'error',
       '-i', str(source_path),
       '-map', '0:a',
-      *self.ffmpegMetadataOptions(),
+      '-map', '0:v?',  # typically embedded artwork
       '-codec:a', 'libmp3lame',
       '-codec:v', 'copy',
       '-q:a', str(self.output_spec['lame_vbr']),
+      *self.ffmpegMetadataOptions(),
       str(self.outputFilePath(source_path.name))
     ]
 
