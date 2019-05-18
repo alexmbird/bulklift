@@ -4,7 +4,6 @@ from transcoders.base import TranscoderBase
 class TranscoderLame(TranscoderBase):
 
   FILE_EXTENSION = '.mp3'
-  COMMENT = "Bulklift 0.1 (ffmpeg + libmp3lame)"
 
 
   def buildTranscodeCmd(self, source_path):

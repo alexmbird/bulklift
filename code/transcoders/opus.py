@@ -4,7 +4,6 @@ from transcoders.base import TranscoderBase
 class TranscoderOpus(TranscoderBase):
 
   FILE_EXTENSION = '.opus'
-  COMMENT = "Bulklift 0.1 (ffmpeg + libopus)"
 
 
   def buildTranscodeCmd(self, source_path):

@@ -25,6 +25,7 @@ class ManifestConfig(dict):
     self['transcoding'].setdefault('ffmpeg_path', None)
     self['transcoding'].setdefault('threads', available_cpu_count())
     self['transcoding'].setdefault('rewrite_metadata', {})
+    self['transcoding']['rewrite_metadata'].setdefault('comment', '')
     self.setdefault('r128gain', {})
     self['r128gain'].setdefault('r128gain_path', None)
     self['r128gain'].setdefault('ffmpeg_path', None)

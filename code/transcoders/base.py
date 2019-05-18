@@ -32,7 +32,6 @@ class TranscoderBase(object):
 
   SIGNATURE_FILE_NAME = '.bulklift.sig'
   FILE_EXTENSION = '.test'
-  COMMENT = "Bulklift 0.1 (base transcoder class aaaAAAAaaaAAAAAA)"
   SANITIZERS = {
     'vfat': vfat_sanitize,
     None: lambda p: p
@@ -238,7 +237,7 @@ class TranscoderBase(object):
     raise NotImplementedError()
 
 
-  def ffmpegMetadataOptions(self, comment=''):
+  def ffmpegMetadataOptions(self):
     """ Generate a list of options suitable for feeding into ffmpeg.  This will
         instantiate any changes to metadata required by user's manfiest. """
     none_to_str = lambda s: '' if s is None else s

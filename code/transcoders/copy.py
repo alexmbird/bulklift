@@ -6,7 +6,6 @@ from transcoders.base import TranscoderBase
 class TranscoderCopy(TranscoderBase):
 
   FILE_EXTENSION = None  # No extension change
-  COMMENT = "Bulklift 0.1 (direct copy)"
 
   def buildTranscodeCmd(self, source_path):
     """ Return a command appropriate for transcoding the specified file """
