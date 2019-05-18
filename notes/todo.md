@@ -15,10 +15,10 @@
 -   [X] <strike>BUGFIX: Recognise .ogg as an audio format</strike>
 -   [X] <strike>IMPROVEMENT: use dest filename in signature; vfat sanitization might cause it to change</strike>
 -   [X] <strike>Transcode for only one target in a single run.  This fits the model of updating a media library on an occasionally-connected device, e.g. a phone mounted with fuse-mtp.</strike>
+-   [X] <strike>FEATURE: Optionally overwrite metadata in target files with `format()`-ed metadata fields (example: strip track numbers from a dir of random files)</strike>
 -   [ ] QUALITY: change `vfat_sanitize()` to use whitelist (including `string.ascii_letters`) rather than blacklist.  This will exclude strange unicode.
 -   [ ] `gain` setting makes more sense under `config` than per-target
 -   [ ] QUALITY: use a `TargetTree` object to handle chown/chmod/cleanup
--   [ ] FEATURE: Optionally overwrite metadata in target files with `format()`-ed metadata fields (example: strip track numbers from a dir of random files)
 -   [ ] QUALITY: type hinting
 -   [ ] QUALITY: f-strings for readability
 -   [ ] QUALITY: `functools.lru_cache` for loading manifests
