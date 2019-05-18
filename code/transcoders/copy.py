@@ -12,13 +12,13 @@ class TranscoderCopy(TranscoderBase):
     """ Return a command appropriate for transcoding the specified file """
     return [
       self.transcode_ffmpeg_path,
-      '-y', '-loglevel', 'error',
+      '-y',
+      '-loglevel', 'error',
       '-i', str(source_path),
-      '-c:v', 'copy',
+      '-map', '0:a',
+      '-bsf:a', 'remove_extra',
       '-codec:a', 'copy',
-      '-map_metadata', '0',
-      '-id3v2_version', '3',
-      '-write_id3v1', '1',
-      '-metadata', 'comment={}'.format(self.COMMENT),
+      *self.ffmpegMetadataOptions(),
+      '-codec:v', 'copy',
       str(self.outputFilePath(source_path.name))
     ]

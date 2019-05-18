@@ -32,6 +32,7 @@ class TranscoderBase(object):
 
   SIGNATURE_FILE_NAME = '.bulklift.sig'
   FILE_EXTENSION = '.test'
+  COMMENT = "Bulklift 0.1 (base transcoder class aaaAAAAaaaAAAAAA)"
   SANITIZERS = {
     'vfat': vfat_sanitize,
     None: lambda p: p
@@ -79,7 +80,7 @@ class TranscoderBase(object):
     self.signatures = {
       'codec': sha256(yaml.safe_dump(self.codecSignature(), encoding='utf8')).hexdigest(),
       'media': sha256(yaml.safe_dump(self.mediaSignature(), encoding='utf8')).hexdigest(),
-      'metadata': sha256(yaml.safe_dump(self.metadata, encoding='utf8')).hexdigest()
+      'metadata': sha256(yaml.safe_dump(self.metadataSignature(), encoding='utf8')).hexdigest()
     }
 
 
@@ -124,6 +125,7 @@ class TranscoderBase(object):
     try:
       self.copyPreservedFiles()
       self.transcodeMediaFiles()
+      # import sys; sys.exit(0)
       self.r128gain()
       self.writeSignatures()
     except Exception as e:
@@ -190,7 +192,9 @@ class TranscoderBase(object):
     files_transcode = self.sourceMediaFiles()
     def _tc(source_p):
       puts("Transcoding '{}'".format(source_p.name))
-      return subprocess.run(self.buildTranscodeCmd(source_p))
+      cmd = self.buildTranscodeCmd(source_p)
+      puts("Cmd: {}".format(cmd))
+      return subprocess.run(cmd, shell=False)
     with ThreadPoolExecutor(max_workers=self.config['transcoding']['threads']) as pool:
       futures = [pool.submit(_tc, p) for p in files_transcode]
       try:
@@ -207,23 +211,20 @@ class TranscoderBase(object):
 
   def r128gain(self):
     """ Run the r128gain tool over the completed output dir """
-    r128_threads = self.config['r128gain']['threads']
+    cli_threads = ['--thread-count', str(self.config['r128gain']['threads'])] if self.config['r128gain']['threads'] else []
+    cli_alb_gain = ['--album-gain'] if self.output_spec['gain']['album'] else []
     cmd = [
       self.r128_r128gain_path,
-      '--recursive', '--ffmpeg-path', self.r128_ffmpeg_path,
-      '--opus-output-gain', '--verbosity', 'warning',
+      '--ffmpeg-path', self.r128_ffmpeg_path,
+      *cli_alb_gain, *cli_threads,
+      '--recursive', '--opus-output-gain', '--verbosity', 'warning',
+      str(self.output_album_path)
     ]
-    if self.output_spec['gain']['album']:
-      cmd += ['--album-gain']
-    # if r128_threads is not None:
-    #   cmd += ['--thread-count', str(r128_threads)]
-    cmd += [str(self.output_album_path)]
-    puts("Running r128gain on output dir (album:{}, threads:{})".format(
-      self.output_spec['gain']['album'],
-      r128_threads if r128_threads is not None else '?'
+    puts("Running r128gain on output dir (albumgain:{})".format(
+      self.output_spec['gain']['album']
     ))
     try:
-      cp = subprocess.run(cmd)
+      cp = subprocess.run(cmd, shell=False)
     except KeyboardInterrupt:
       raise TranscodingError("Keyboard interrupt; aborted transcoding")
     if cp.returncode == 0:
@@ -238,6 +239,32 @@ class TranscoderBase(object):
     raise NotImplementedError()
 
 
+  def ffmpegMetadataOptions(self, comment=''):
+    """ Generate a list of options suitable for feeding into ffmpeg.  This will
+        instantiate any changes to metadata required by user's manfiest. """
+    none_to_str = lambda s: '' if s is None else s
+    opts = [
+      # '-map_metadata:g', '-1:g',
+      # '-map_metadata:s:a:0', '-1:s:a',
+      # '-map_metadata:s:v:0', '-1:s:v',
+      # '-map_metadata:g', '0',
+      # '-map_metadata:s:a:0', '0:s:a',
+    ]
+    metadata_cli = {k : none_to_str(v) for k, v in self.metadata.items()}
+    for k, v in self.config['transcoding']['rewrite_metadata'].items():
+      # Passed directly to subprocess.run(), no need for shell escaping
+      if v is None:
+        opts += ['-metadata', "{}=".format(k)]
+        opts += ['-metadata:s:a', "{}=".format(k)]
+      else:
+        opts += ['-metadata', "{}=\"{}\"".format(k, v.format(metadata_cli))]
+        opts += ['-metadata:s:a', "{}=\"{}\"".format(k, v.format(metadata_cli))]
+    opts += ['-id3v2_version', '3']
+    opts += ['-write_id3v1', '1']
+    opts += ['-write_xing', '1']
+    return opts
+
+
   def codecSignature(self):
     """ Return a string representing the codec & settings used to transcode
         the output.  This can be used to detect when the target is outdated and
@@ -246,6 +273,15 @@ class TranscoderBase(object):
       self.__class__.__name__,
       self.output_spec['codec_version'],
       self.output_spec['gain']
+    )
+
+
+  def metadataSignature(self):
+    """ Return a string representing the metadata used to create.  Rewriting
+        settings are included.  """
+    return (
+      self.metadata,
+      self.config['transcoding']['rewrite_metadata']
     )
 
 

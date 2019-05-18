@@ -13,13 +13,11 @@ class TranscoderLame(TranscoderBase):
       self.transcode_ffmpeg_path,
       '-y', '-loglevel', 'error',
       '-i', str(source_path),
-      '-c:v', 'copy',
+      '-map', '0:a',
+      *self.ffmpegMetadataOptions(),
       '-codec:a', 'libmp3lame',
+      '-codec:v', 'copy',
       '-q:a', str(self.output_spec['lame_vbr']),
-      '-map_metadata', '0',
-      '-id3v2_version', '3',
-      '-write_id3v1', '1',
-      '-metadata', 'comment={}'.format(self.COMMENT),
       str(self.outputFilePath(source_path.name))
     ]
 
