@@ -289,8 +289,9 @@ class TranscoderBase(object):
     with indent(2):
       puts(yaml.safe_dump(dict_not_nulls(spec)).strip())
     puts("Metadata:")
+    metadata = dict_not_nulls(self.metadata)
     with indent(2):
-      puts(yaml.safe_dump(dict_not_nulls(spec)).strip())
+      puts(yaml.safe_dump(dict_not_nulls(metadata)).strip())
     puts("Signatures:")
     with indent(2):
       for k, v in self.signatures.items():
