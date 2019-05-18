@@ -248,9 +248,6 @@ class TranscoderBase(object):
       if v is not None:
         opts += ['-metadata', "{}={}".format(k, v.format(metadata_cli))]
         opts += ['-metadata:s:a', "{}={}".format(k, v.format(metadata_cli))]
-    opts += ['-id3v2_version', '3']
-    opts += ['-write_id3v1', '1']
-    opts += ['-write_xing', '1']
     return opts
 
 

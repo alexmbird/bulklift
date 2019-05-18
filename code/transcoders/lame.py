@@ -18,6 +18,9 @@ class TranscoderLame(TranscoderBase):
       '-codec:v', 'copy',
       '-q:a', str(self.output_spec['lame_vbr']),
       *self.ffmpegMetadataOptions(),
+      '-id3v2_version', '3',
+      '-write_id3v1', '1',
+      '-write_xing', '1',
       str(self.outputFilePath(source_path.name))
     ]
 
