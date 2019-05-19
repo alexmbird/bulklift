@@ -16,8 +16,10 @@
 -   [X] <strike>IMPROVEMENT: use dest filename in signature; vfat sanitization might cause it to change</strike>
 -   [X] <strike>Transcode for only one target in a single run.  This fits the model of updating a media library on an occasionally-connected device, e.g. a phone mounted with fuse-mtp.</strike>
 -   [X] <strike>FEATURE: Optionally overwrite metadata in target files with `format()`-ed metadata fields (example: strip track numbers from a dir of random files)</strike>
+-   [X] <strike>`gain` setting makes more sense under `config` than per-target</strike>
+-   [ ] IMPROVEMENT: only create a job for dirs that have transcoding _and_ >0 files that match the filter.
+-   [ ] FEATURE: option (default on) to strip artwork from files; ffmpeg sometimes chokes on it
 -   [ ] QUALITY: change `vfat_sanitize()` to use whitelist (including `string.ascii_letters`) rather than blacklist.  This will exclude strange unicode.
--   [ ] `gain` setting makes more sense under `config` than per-target
 -   [ ] QUALITY: use a `TargetTree` object to handle chown/chmod/cleanup
 -   [ ] QUALITY: type hinting
 -   [ ] QUALITY: f-strings for readability

@@ -208,25 +208,28 @@ class TranscoderBase(object):
 
 
   def r128gain(self):
-    """ Run the r128gain tool over the completed output dir """
-    cli_threads = ['--thread-count', str(self.config['r128gain']['threads'])] if self.config['r128gain']['threads'] else []
-    cli_alb_gain = ['--album-gain'] if self.output_spec['gain']['album'] else []
+    """ Run the r128gain tool over the completed output dir.  Gain type can
+        be None (do not run), album (add album gain tags) or track (no album
+        tags).  """
+    rconf = self.config['r128gain']
+    if rconf['type'] in (None, 'null', False):
+      return
+    do_album_gain = rconf['type'] in ('album',)
+    cli_alb_gain = ['--album-gain'] if do_album_gain else []
+    cli_threads = ['--thread-count', str(rconf['threads'])] if rconf['threads'] else []
     cmd = [
       self.r128_r128gain_path,
-      '--ffmpeg-path', self.r128_ffmpeg_path,
-      *cli_alb_gain, *cli_threads,
       '--recursive', '--opus-output-gain', '--verbosity', 'warning',
-      str(self.output_album_path)
+      '--ffmpeg-path', self.r128_ffmpeg_path,
+      *cli_alb_gain, *cli_threads, str(self.output_album_path)
     ]
-    puts("Running r128gain on output dir (albumgain:{})".format(
-      self.output_spec['gain']['album']
-    ))
+    puts("Running r128gain (album:{})".format(do_album_gain))
     try:
       cp = subprocess.run(cmd, shell=False)
     except KeyboardInterrupt:
       raise TranscodingError("Keyboard interrupt; aborted transcoding")
     if cp.returncode == 0:
-      puts("Added replaygain tags")
+      puts("Added replaygain tags ok")
     else:
       raise TranscodingError("Failed to add replaygain tags")
 
@@ -258,7 +261,7 @@ class TranscoderBase(object):
     return (
       self.__class__.__name__,
       self.output_spec['codec_version'],
-      self.output_spec['gain']
+      self.config['r128gain']['type']
     )
 
 

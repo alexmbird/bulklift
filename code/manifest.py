@@ -30,6 +30,7 @@ class ManifestConfig(dict):
     self['r128gain'].setdefault('r128gain_path', None)
     self['r128gain'].setdefault('ffmpeg_path', None)
     self['r128gain'].setdefault('threads', None)
+    self['r128gain'].setdefault('type', 'album')
     self.setdefault('target', {})
     self['target'].setdefault('album_dir', self.DFL_ALBUM_DIR_TEMPLATE)
 
@@ -45,8 +46,6 @@ class ManifestOutput(dict):
     self.setdefault('codec_version', None)
     self.setdefault('lame_vbr', 3)
     self.setdefault('opus_bitrate', '128k')
-    self.setdefault('gain', {})
-    self['gain'].setdefault('album', True)
     self.setdefault('permissions', {})
     self['permissions'].setdefault('dir_mode', None)
     self['permissions'].setdefault('file_mode', None)
