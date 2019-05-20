@@ -199,7 +199,7 @@ class TranscoderBase(object):
         for future in as_completed(futures):
           cp = future.result()
           if cp.returncode != 0:
-            puts(colored.red("Failed '{}'".format(Path(cp.args[-1]).name)))
+            raise TranscodingError("Failed '{}'".format(Path(cp.args[-1]).name))
       except KeyboardInterrupt as e:
         for future in futures:
           future.cancel()
@@ -246,11 +246,19 @@ class TranscoderBase(object):
     none_to_str = lambda s: '' if s is None else s
     metadata_cli = {k : none_to_str(v) for k, v in self.metadata.items()}
     opts = []
-    for k, v in self.config['transcoding']['rewrite_metadata'].items():
+    for k, tpl in self.config['transcoding']['rewrite_metadata'].items():
       # Passed directly to subprocess.run(), no need for shell escaping
-      if v is not None:
-        opts += ['-metadata', "{}={}".format(k, v.format(metadata_cli))]
-        opts += ['-metadata:s:a', "{}={}".format(k, v.format(metadata_cli))]
+      if tpl is not None:
+        try:
+          result = tpl.format(**metadata_cli)
+        except KeyError:
+          raise MetadataError(
+            "{} has missing metadata for template '{}'.  Available: {}".format(
+              self.source.path, tpl, metadata_cli
+            )
+          )
+        opts += ['-metadata', "{}={}".format(k, result)]
+        opts += ['-metadata:s:a', "{}={}".format(k, result)]
     return opts
 
 
