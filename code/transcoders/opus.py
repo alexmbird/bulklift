@@ -13,7 +13,7 @@ class TranscoderOpus(TranscoderBase):
       '-y', '-loglevel', 'error',
       '-i', str(source_path),
       '-map', '0:a',
-      '-map', '0:v?',  # typically embedded artwork
+      # '-map', '0:v?',  # ffmpeg+libopus doesn't like embedded artwork?
       '-codec:a', 'libopus',
       '-codec:v', 'copy',
       '-compression_level', '10', # Slowest encode, highest quality

@@ -17,12 +17,12 @@
 -   [X] <strike>Transcode for only one target in a single run.  This fits the model of updating a media library on an occasionally-connected device, e.g. a phone mounted with fuse-mtp.</strike>
 -   [X] <strike>FEATURE: Optionally overwrite metadata in target files with `format()`-ed metadata fields (example: strip track numbers from a dir of random files)</strike>
 -   [X] <strike>`gain` setting makes more sense under `config` than per-target</strike>
+-   [X] <strike>BUGFIX: some ffmpeg versions don't handle `-map ...?` syntax (actually ffmpeg+libopus doesn't like embedded artwork)</strike>
 -   [ ] IMPROVEMENT: only create a job for dirs that have transcoding _and_ >0 files that match the filter.
 -   [ ] FEATURE: option (default on) to strip artwork from files; ffmpeg sometimes chokes on it
 -   [ ] QUALITY: change `vfat_sanitize()` to use whitelist (including `string.ascii_letters`) rather than blacklist.  This will exclude strange unicode.
 -   [ ] QUALITY: use a `TargetTree` object to handle chown/chmod/cleanup
 -   [ ] QUALITY: type hinting
--   [ ] QUALITY: f-strings for readability
 -   [ ] QUALITY: `functools.lru_cache` for loading manifests
 -   [ ] FEATURE: "virtual" sources.  Run an external command (e.g. `wget ...`) to get media from elsewhere
 -   [ ] FEATURE: config param for size of target and alert when it has been exceeded
@@ -33,3 +33,4 @@
 -   [ ] Release on PyPy
 -   [ ] Static release builds
 -   [ ] Unit testing against real (generated) trees of files
+-   [ ] QUALITY: [f-strings](https://realpython.com/python-f-strings/) for readability (but not until Python >= 3.6 is more common)
