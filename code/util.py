@@ -46,11 +46,11 @@ def filename_matches_globs(path, globs=[]):
 
 
 # INVALID_VFAT_CHARS = '?<>\\:*|"'
-VALID_VFAT_CHARS = string.ascii_letters + string.digits + '._-/ '
+VALID_VFAT_CHARS = string.ascii_letters + string.digits + '._+-/()[]& '
 
 def vfat_sanitize(path):
   """ Return a version of `path` sanitized for fat32/vfat filesystems by
       removing disallowed characters.  '/' is not valid in fat32 filenames but
       we permit it as a dir specifier.   """
-  sanitized = ''.join([c if c in VALID_VFAT_CHARS else '_' for c in str(path)])
+  sanitized = ''.join([c if c in VALID_VFAT_CHARS else '' for c in str(path)])
   return Path(sanitized)

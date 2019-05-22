@@ -13,9 +13,9 @@ class TranscoderLame(TranscoderBase):
       '-y', '-loglevel', 'error',
       '-i', str(source_path),
       '-map', '0:a',
-      '-map', '0:v?',  # typically embedded artwork
+      # '-map', '0:v?',  # typically embedded artwork
       '-codec:a', 'libmp3lame',
-      '-codec:v', 'copy',
+      # '-codec:v', 'copy',
       '-q:a', str(self.output_spec['lame_vbr']),
       *self.ffmpegMetadataOptions(),
       '-id3v2_version', '3',

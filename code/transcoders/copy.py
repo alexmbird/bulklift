@@ -15,9 +15,9 @@ class TranscoderCopy(TranscoderBase):
       '-loglevel', 'error',
       '-i', str(source_path),
       '-map', '0:a',
-      '-map', '0:v?',  # typically embedded artwork
+      # '-map', '0:v?',  # typically embedded artwork
       '-codec:a', 'copy',
-      '-codec:v', 'copy',
+      # '-codec:v', 'copy',
       *self.ffmpegMetadataOptions(),
       str(self.outputFilePath(source_path.name))
     ]

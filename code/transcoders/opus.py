@@ -15,7 +15,7 @@ class TranscoderOpus(TranscoderBase):
       '-map', '0:a',
       # '-map', '0:v?',  # ffmpeg+libopus doesn't like embedded artwork?
       '-codec:a', 'libopus',
-      '-codec:v', 'copy',
+      # '-codec:v', 'copy',
       '-compression_level', '10', # Slowest encode, highest quality
       '-vbr', 'on',
       '-b:a', str(self.output_spec['opus_bitrate']),

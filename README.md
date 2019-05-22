@@ -17,7 +17,7 @@ Features:
 -  Manifests are just text files stored alongside your music; no database to corrupt or lose
 -  Toggle the output tree(s) a source album will be transcoded to.  Want only half of Lady Gaga's albums on your phone?  With each at a different bitrate?  Done.
 -  Include/exclude specific tracks based upon filename globbing.  Only want disc 1 of a 3-disc set?  Simply include `1-*.flac`.
--  Copies album art (gif, png, jpg) unmolested to the output directory
+-  Copies album art files (gif, png, jpg) unmolested to the output directory
 -  Passthrough `copy` format to copy files without re-encoding
 -  Multithreading (4x faster on my Raspberry Pi media server)
 
