@@ -12,7 +12,6 @@ class TestManifest(unittest.TestCase):
     man_root = Manifest.load(p)
     self.assertTrue(man_root['root'])
     self.assertEqual(man_root['metadata'], {})
-    self.assertFalse(man_root.is_metadata_complete())
     p = p / 'Electronic'
     man_genre = Manifest.load(p)
     self.assertFalse(man_genre['root'])
@@ -30,7 +29,6 @@ class TestManifest(unittest.TestCase):
       'year': 1998
     })
     self.assertEqual(len(man_album_a.outputs), 2)
-    self.assertTrue(man_album_a.is_metadata_complete())
     man_album_b = Manifest.load(p / '2004 Album Made With My Mate')
     self.assertFalse(man_album_b['root'])
     self.assertEqual(man_album_b['metadata'], {
@@ -40,7 +38,6 @@ class TestManifest(unittest.TestCase):
       'year': 2004
     })
     self.assertEqual(man_album_b.outputs_enabled, [])
-    self.assertEqual(len(Manifest.MANIFEST_CACHE), 5)
 
 
   def test_LoadNoRoot(self):

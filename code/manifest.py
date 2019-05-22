@@ -1,4 +1,5 @@
 import yaml
+import functools
 from copy import deepcopy
 from pathlib import Path
 
@@ -79,9 +80,6 @@ class Manifest(dict):
 
   MANIFEST_FILE_NAME = '.bulklift.yaml'
 
-  # 1 manifest, 1 object
-  MANIFEST_CACHE = {}
-
   # Metadata must contain at least these fields
   METADATA_REQUIRED = ('artist', 'album', 'genre', 'year')
 
@@ -105,21 +103,8 @@ class Manifest(dict):
 
 
   @classmethod
+  @functools.lru_cache(maxsize=None)
   def load(cls, path):
-    """ Load a manifest file, preferring a cached copy if available """
-    if not isinstance(path, Path):
-      raise TypeError("Manifest takes pathlib.Path")
-    if not path.is_dir():
-      raise ValueError("__init__() takes reference to dir, not manifest file")
-    # print("Loading manifest from {}".format(path))
-    try:
-      return cls.MANIFEST_CACHE[path]
-    except KeyError:
-      return cls.loadFresh(path)
-
-
-  @classmethod
-  def loadFresh(cls, path):
     """ Load a manifest file from disk, insert it into the cache and return a
         a fresh Manifest object.  Any previously cached object will be
         replaced.  """
@@ -134,16 +119,14 @@ class Manifest(dict):
 
     data.setdefault('root', False)  # if not root, be explicit about it
     if data['root']:
-      manifest = Manifest(path, data)
+      return Manifest(path, data)
     else:
       if path == path.parent:   # Reached / without finding a root manifest
         raise RecursionError("Root manifest could not be found; did you miss a 'root: true'?")
       parent_manifest = cls.load(path.parent)
       new = deepcopy(parent_manifest)
       dict_deep_merge(new, data)
-      manifest = Manifest(path, new)
-    cls.MANIFEST_CACHE[path] = manifest
-    return manifest
+      return Manifest(path, new)
 
 
   def exists(self):
@@ -207,7 +190,3 @@ class Manifest(dict):
   @property
   def outputs_enabled(self):
     return [(name, spec) for name, spec in self['outputs'].items() if spec['enabled']]
-
-
-  def is_metadata_complete(self):
-    return set(self.METADATA_REQUIRED).issubset(set(self['metadata'].keys()))
