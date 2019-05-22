@@ -30,5 +30,5 @@ class TestFat32Sanitize(unittest.TestCase):
   def test_fat32_sanitize(self):
     "Sanitize filenames for vfat"
     self.assertEqual(vfat_sanitize(Path('/this/is/fi ne')), Path('/this/is/fi ne'))
-    self.assertEqual(vfat_sanitize(Path('/this/<s/?not')), Path('/this/_s/_not'))
-    self.assertEqual(vfat_sanitize('/this/>s/?not'), Path('/this/_s/_not'))
+    self.assertEqual(vfat_sanitize(Path('/this/<s/?not')), Path('/this/s/not'))
+    self.assertEqual(vfat_sanitize('/this/>s/?not'), Path('/this/s/not'))
