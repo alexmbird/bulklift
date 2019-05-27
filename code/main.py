@@ -6,10 +6,12 @@ from pathlib import Path
 import subprocess
 import os
 import shutil
+from itertools import chain
 
 from clint.textui import puts, indent, colored
 
-from source import MediaSourceRoot
+from input import MediaSourceDir
+from output import OutputTree
 from manifest import Manifest
 
 
@@ -19,17 +21,23 @@ MIN_PYTHON_VERSION = (3,5,3)
 
 def cmd_transcode(args):
   """ Find any outstanding transcoding jobs and action them """
-  tree_root = MediaSourceRoot(Path(args.source_tree_root[0]))
-  targets = [t for t in tree_root.targets(output=args.output) if t.is_stale()]
-  for n, t in enumerate(targets):
-    puts("{} ({} of {})".format(t, n+1, len(targets)+1))
+  tree_root = MediaSourceDir(Path(args.source_tree_root[0]))
+  input_albums = [msd.album() for msd in tree_root.walk() if msd.is_transcodable()]
+  for n, ia in enumerate(input_albums):
+    puts("{} ({} of {})".format(ia, n+1, len(input_albums)))
     with indent(2):
-      t.transcode(retain_on_fail=args.debug)
+      ia.transcode()
       puts()
   if args.noclean:
     puts("Skipping cleanup of redundant targets")
   else:
-    tree_root.cleanup(output=args.output)
+    for oconf in tree_root.manifest.outputs:
+      puts("Cleaning up redundant dirs in output tree '{}'".format(oconf['name']))
+      otree = OutputTree(Path(oconf['path']))
+      with indent(2):
+        output_albums = list(chain([ia.output_albums for ia in input_albums]))
+        output_paths = [oa.path for oa in output_albums]
+        otree.cleanup(expected_dirs=output_paths)
 
 
 def cmd_test(args):
@@ -64,10 +72,10 @@ def cmd_edit(args):
   """ Edit the manifest for a directory.  If none exists generate a sensible
       template to start from """
   abspath = Path(args.dir).resolve()
-  manifest_path = Manifest.manifest_file_name(abspath)
+  manifest_path = Manifest.manifestFilePath(abspath)
   puts("Editing manifest for '{}'".format(manifest_path))
   if not manifest_path.exists():
-    manifest = Manifest.load(abspath)
+    manifest = Manifest.fromDir(abspath)
     with manifest_path.open('w') as stream:
       stream.write(manifest.dumpTemplate())
   subprocess.run([

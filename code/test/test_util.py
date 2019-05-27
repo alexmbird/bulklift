@@ -1,7 +1,11 @@
 import unittest
 from pathlib import Path
+import tempfile
 
-from util import dict_not_nulls, available_cpu_count, vfat_sanitize
+from test.fakesourcetree import FakeSourceTreeAlbum
+from util.file import is_parent_path, is_audio_dir
+from util.sanitize import dummy_sanitize, vfat_sanitize
+from util.data import dict_not_nulls, available_cpu_count
 
 
 class TestDictNotNulls(unittest.TestCase):
@@ -25,10 +29,51 @@ class TestCpuCount(unittest.TestCase):
     assert cc == int(cc)
 
 
-class TestFat32Sanitize(unittest.TestCase):
+class TestVfatSanitize(unittest.TestCase):
 
-  def test_fat32_sanitize(self):
+  def test_vfat_sanitize(self):
     "Sanitize filenames for vfat"
+    self.assertEqual(vfat_sanitize(Path('relative/p>th')), Path('relative/pth'))
     self.assertEqual(vfat_sanitize(Path('/this/is/fi ne')), Path('/this/is/fi ne'))
     self.assertEqual(vfat_sanitize(Path('/this/<s/?not')), Path('/this/s/not'))
-    self.assertEqual(vfat_sanitize('/this/>s/?not'), Path('/this/s/not'))
+    self.assertEqual(
+      vfat_sanitize(Path('/this/<s/?not'), replace='_'),
+      Path('/this/_s/_not')
+    )
+
+
+class TestIsParentPath(unittest.TestCase):
+
+  def test_is_parent_path(self):
+    "is_parent_path detects parent/child paths"
+    self.assertTrue(is_parent_path(Path('/tmp'), Path('/tmp/a_filename')))
+    self.assertFalse(is_parent_path(Path('/usr'), Path('/tmp')))
+    with self.assertRaises(ValueError):
+      is_parent_path(Path('/tmp/a_nonexistent_file_7342jk'), Path('/tmp/foo'))
+
+
+class TestIsAudioDir(unittest.TestCase):
+
+  @classmethod
+  def setUpClass(cls):
+    """ Create a temp dir for tests """
+    cls.TEMPDIR = tempfile.TemporaryDirectory('bulklift_tests')
+    cls.TEMPPATH = Path(cls.TEMPDIR.name)
+    cls.INPUT_PATH = cls.TEMPPATH / 'source'
+    cls.INPUT_PATH.mkdir()
+    cls.FAKE_ALBUM = FakeSourceTreeAlbum(base_path=cls.INPUT_PATH)
+    cls.EMPTY_ALBUM_PATH = cls.INPUT_PATH / 'empty_dir'
+    cls.EMPTY_ALBUM_PATH.mkdir()
+    cls.OUTPUT_PATH = cls.TEMPPATH / 'output'
+    cls.OUTPUT_PATH.mkdir()
+
+  @classmethod
+  def tearDownClass(cls):
+    """ Remove temp dir """
+    cls.TEMPDIR.cleanup()
+
+  def test_is_audio_dir(self):
+    "is_audio_dir() corectly identifies audio dirs"
+    self.assertTrue(is_audio_dir(self.FAKE_ALBUM.path))
+    self.assertFalse(is_audio_dir(self.EMPTY_ALBUM_PATH))
+

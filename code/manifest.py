@@ -5,13 +5,16 @@ from pathlib import Path
 
 from clint.textui import puts, colored
 
-from util import dict_deep_merge, available_cpu_count
-from transcoders import TRANSCODE_TYPES
-
+from util.data import dict_deep_merge, available_cpu_count
+from util.file import is_audio_dir, expandvars
 
 
 class ManifestError(Exception):
   "Problem reading or parsing a manifest file"
+
+
+class MetadataError(ManifestError):
+  "A required piece of metadata was missing"
 
 
 class ManifestConfig(dict):
@@ -23,15 +26,20 @@ class ManifestConfig(dict):
   def __init__(self, *args, **kwargs):
     super(ManifestConfig, self).__init__(*args, **kwargs)
     self.setdefault('transcoding', {})  # see _getBinary()
-    self['transcoding'].setdefault('ffmpeg_path', None)
-    self['transcoding'].setdefault('threads', available_cpu_count())
-    self['transcoding'].setdefault('rewrite_metadata', {})
-    self['transcoding']['rewrite_metadata'].setdefault('comment', '')
+    tc = self['transcoding']
+    tc.setdefault('ffmpeg_path', None)
+    tc['ffmpeg_path'] = expandvars(tc['ffmpeg_path'])
+    tc.setdefault('threads', available_cpu_count())
+    tc.setdefault('rewrite_metadata', {})
+    tc['rewrite_metadata'].setdefault('comment', '')
     self.setdefault('r128gain', {})
-    self['r128gain'].setdefault('r128gain_path', None)
-    self['r128gain'].setdefault('ffmpeg_path', None)
-    self['r128gain'].setdefault('threads', None)
-    self['r128gain'].setdefault('type', 'album')
+    rg = self['r128gain']
+    rg.setdefault('r128gain_path', None)
+    rg['r128gain_path'] = expandvars(rg['r128gain_path'])
+    rg.setdefault('ffmpeg_path', None)
+    rg['ffmpeg_path'] = expandvars(rg['ffmpeg_path'])
+    rg.setdefault('threads', None)
+    rg.setdefault('type', 'album')
     self.setdefault('target', {})
     self['target'].setdefault('album_dir', self.DFL_ALBUM_DIR_TEMPLATE)
 
@@ -40,11 +48,12 @@ class ManifestOutput(dict):
   """ Dict-like representing an output, with sensible defaults """
 
   def __init__(self, *args, **kwargs):
+    # print("creating a ManifestOutput from: {}".format(args[0]))
     super(ManifestOutput, self).__init__(*args, **kwargs)
+    self.setdefault('name', 'unnamed')
     self.setdefault('sanitize_paths', None)
-    self.setdefault('codec', 'null')
+    self.setdefault('formats', []) # accepted formats in order of preference, eg. ['opus', 'mp3']
     self.setdefault('enabled', False)
-    self.setdefault('codec_version', None)
     self.setdefault('lame_vbr', 3)
     self.setdefault('opus_bitrate', '128k')
     self.setdefault('permissions', {})
@@ -57,14 +66,13 @@ class ManifestOutput(dict):
     self['filters'].setdefault('exclude', [])
     if not 'path' in self:
       raise ManifestError("output is missing a 'path' field")
-
+    self['path'] = expandvars(self['path'])
 
   @property
   def permissions_dir_mode(self):
     """ Return the dir mode configured, if any, in octal """
     dm = self['permissions']['dir_mode']
     return None if dm is None else int(dm, 8)
-
 
   @property
   def permissions_file_mode(self):
@@ -89,70 +97,73 @@ class Manifest(dict):
     super(Manifest, self).__init__(mapping, **kwargs)
     self.path = path
 
-    # Set defaults & translate some of our contents into specialized objects
-    self['config'] = ManifestConfig(self.get('config', {}))
-    self.setdefault('metadata', {})
-    self['outputs'] = {
-      n: ManifestOutput(s) for n, s in self.get('outputs', {}).items()
-    }
+    # A couple of sanity checks
+    if not isinstance(self.get('outputs', []), list):
+      raise MetadataError(
+        "Invalid 'outputs' section for {} - outdated config format?".format(
+          self.path
+        )
+      )
 
+    # Set defaults & translate some of our contents into specialized objects
+    self.setdefault('metadata', {})
+    self['config'] = ManifestConfig(self.get('config', {}))
+    self['outputs'] = [ManifestOutput(oconf) for oconf in self.get('outputs', [])]
 
   @classmethod
-  def manifest_file_name(cls, path):
+  def manifestFilePath(cls, path):
     return path / cls.MANIFEST_FILE_NAME
 
+  def exists(self):
+    """ Return True if this manifest exists on disk """
+    return self.manifestFilePath(self.path).is_file()
 
   @classmethod
   @functools.lru_cache(maxsize=None)
-  def load(cls, path):
-    """ Load a manifest file from disk, insert it into the cache and return a
-        a fresh Manifest object.  Any previously cached object will be
-        replaced.  """
-    manifest_path = cls.manifest_file_name(path)
+  def loadYaml(cls, dir_path):
+    """ Load a yaml-formatted manifest from disk for Path `dir_path` """
+    man_path = cls.manifestFilePath(dir_path)
+    # puts("Loading {}".format(man_path))
     try:
-      with manifest_path.open('r') as stream:
+      with man_path.open('r') as stream:
         data = yaml.safe_load(stream)
     except FileNotFoundError:
       data = {}
     except yaml.scanner.ScannerError as e:
       raise ManifestError("Error parsing {}:\n\n{}".format(manifest_path, e))
+    data.setdefault('root', False)
+    return data
 
-    data.setdefault('root', False)  # if not root, be explicit about it
-    if data['root']:
+  @classmethod
+  def fromDir(cls, path, override={}):
+    """ Load the manifest from `path`, if present, and merge it with any parent
+        manifests up to the root """
+    data = deepcopy(cls.loadYaml(path))
+    got_root = data.get('root', False)
+    # dict_deep_merge() doesn't do lists, so we have to re-pack the outputs
+    outputs_data = {o['name']: o for o in data.get('outputs', [])}
+    outputs_override = {o['name']: o for o in override.pop('outputs', [])}
+    dict_deep_merge(outputs_data, outputs_override)
+    data['outputs'] = list(outputs_data.values())
+    dict_deep_merge(data, override)
+    if got_root:   # must have merged in the root manifest
       return Manifest(path, data)
-    else:
-      if path == path.parent:   # Reached / without finding a root manifest
-        raise RecursionError("Root manifest could not be found; did you miss a 'root: true'?")
-      parent_manifest = cls.load(path.parent)
-      new = deepcopy(parent_manifest)
-      dict_deep_merge(new, data)
-      return Manifest(path, new)
-
-
-  def exists(self):
-    """ Return True if this manifest exists on disk """
-    return self.manifest_file_name(self.path).is_file()
-
-
-  def is_music_dir(self):
-    """ Return True if this path contains any supported media types """
-    for p in self.path.iterdir():
-      if p.suffix in TRANSCODE_TYPES:
-        return True
-    return False
-
+    if path == path.parent:       # Reached / without finding a root manifest
+      raise ManifestError(
+        "Root manifest could not be found; did you miss a 'root: true'?"
+      )
+    return cls.fromDir(path.parent, data)
 
   def dumpTemplate(self):
     """ Try to infer the directory level we're on and produce an appropriate
         yaml template for the user to edit """
     if self['root']:
       d = dict(self)
-    elif self.is_music_dir():
+    elif is_audio_dir(self.path):
       d = self.genTemplateForAlbum()
     else:
       d = self.genTemplateForArtist()
     return yaml.safe_dump(d)
-
 
   def genTemplateForArtist(self):
     """ Dump yaml suitable to be used as a template for an artist manifest """
@@ -162,7 +173,6 @@ class Manifest(dict):
     m.setdefault('artist', '')
     return d
 
-
   def genTemplateForAlbum(self):
     """ Dump yaml suitable to be used as a template for an album manifest.
         FIXME: remove transcoder-specific logic   """
@@ -170,23 +180,24 @@ class Manifest(dict):
     m = d.setdefault('metadata', {})
     m.setdefault('album', '')
     m.setdefault('year', '')
-    d.setdefault('outputs', {})
-    for o_name, o_spec in self['outputs'].items():
-      unmasked = ['codec',]
-      if o_spec['codec'] == 'opus':
-        unmasked += ['opus_bitrate']
-      elif o_spec['codec'] == 'lame':
-        unmasked += ['lame_vbr']
-      d['outputs'][o_name] = {k:v for k,v in o_spec.items() if k in unmasked}
-      d['outputs'][o_name].setdefault('enabled', True)  # for new templates default to on
+    d.setdefault('outputs', [])
+    for output in self.outputs:
+      wanted = ['name']
+      if 'opus' in output['formats']:
+        wanted += ['opus_bitrate']
+      if 'mp3' in output['formats']:
+        wanted += ['lame_vbr']
+      new_output = {k:v for k,v in output.items() if k in wanted}
+      new_output.setdefault('enabled', True)
+      d['outputs'].append(new_output)
     return d
-
 
   @property
   def outputs(self):
-    return [(name, spec) for name, spec in self['outputs'].items()]
-
+    """ Return a list of output specs, whether or not they are disabled """
+    return self['outputs']
 
   @property
   def outputs_enabled(self):
-    return [(name, spec) for name, spec in self['outputs'].items() if spec['enabled']]
+    """ Return a list of output specs, but only the ones that are enabled """
+    return [o for o in self.outputs if o['enabled']]

@@ -20,14 +20,12 @@
 -   [X] <strike>BUGFIX: some ffmpeg versions don't handle `-map ...?` syntax (actually ffmpeg+libopus doesn't like embedded artwork)</strike>
 -   [X] <strike>QUALITY: change `vfat_sanitize()` to use whitelist (including `string.ascii_letters`) rather than blacklist.  This will exclude strange unicode.</strike>
 -   [X] <strike>QUALITY: `functools.lru_cache` for loading manifests</strike>
--   [ ] IMPROVEMENT: only create a job for dirs that have transcoding _and_ >0 files that match the filter.
--   [ ] IMPROVEMENT: for each output tree, specify a preferred format and a list of acceptable formats.  Then we need not waste output space on unacceptable ones.
+-   [X] <strike>IMPROVEMENT: when there are multiple outputs, transcode to both in a single ffmpeg run</strike>
 -   [ ] QUALITY: use a `TargetTree` object to handle chown/chmod/cleanup
 -   [ ] QUALITY: type hinting
 -   [ ] FEATURE: "virtual" sources.  Run an external command (e.g. `wget ...`) to get media from elsewhere
 -   [ ] FEATURE: config param for size of target and alert when it has been exceeded
--   [ ] IMPROVEMENT: when there are multiple outputs, transcode to both in a single ffmpeg run
--   [ ] QUALITY: make signatures less sensitive to changes in yaml formatting
+-   [X] <strike>QUALITY: make signatures less sensitive to changes in yaml formatting</strike>
 -   [ ] Check manifest content in test mode, not just yaml parsing
 -   [ ] Test new manifests after they get created in edit mode
 -   [ ] Extra output formats (m4a)

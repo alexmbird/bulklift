@@ -19,6 +19,7 @@ Features:
 -  Include/exclude specific tracks based upon filename globbing.  Only want disc 1 of a 3-disc set?  Simply include `1-*.flac`.
 -  Copies album art files (gif, png, jpg) unmolested to the output directory
 -  Passthrough `copy` format to copy files without re-encoding
+-  Minimise IO by transcoding all copies of a source within a [single ffmpeg run](https://trac.ffmpeg.org/wiki/Creating%20multiple%20outputs)
 -  Multithreading (4x faster on my Raspberry Pi media server)
 
 Bulklift has approximately zero bells and whistles.  It doesn't try to be clever and decisions about metadata are left to the user.  It won't download misspellings of your favourite artist's name from CDDB and won't force strange genres from other people's tags upon your filesystem.  Never again will Taylor Swift darken your goth folder.
@@ -38,8 +39,13 @@ $ pip3 install -r requirements.txt
 
 ## Testing
 ```plain
+$ sudo apt install sox  # used to generate test data
 $ python3 -m unittest discover code/
 ```
+
+Notes:
+-   The tests create a fake tree of input media in a tempdir.  To save SSD wear and improve performance you may wish to have `/tmp` [mounted](https://askubuntu.com/questions/173094/how-can-i-use-ram-storage-for-the-tmp-directory-and-how-to-set-a-maximum-amount#173294) as `tmpfs`.
+
 
 ## Usage
 ```plain
@@ -109,20 +115,18 @@ Some of the more common options...
 | `config.r128gain.threads` | - | `2` | Run a specific number of r128gain threads.  Default is to let it choose, usually the number of cores in your system. |
 | `config.r128gain.ffmpeg_path` | - | `${HOME}/.local/bin/ffmpeg` | Use a specific ffmpeg binary for r128gain.  Default is to fail back to `config.transcoding.ffmpeg_path` and then the first `ffmpeg` in `$PATH`. |
 | `config.target.album_dir` | - | `"{genre}/{year} {album}"` | Template for the directories music will be transcoded into.  The default is suitable for albums with a single artist.  Override it for mixes, soundtracks etc.  Passed to Python's `str.format()` [method](https://docs.python.org/3/library/stdtypes.html#str.format) to interpolate metadata fields.  Set globally rather than for specific targets because it is presumed you'll want consistent naming.  |
-| `outputs`  | -        | `{}`    | Map of outputs BL _may_ transcode to.  While typically (but not necessarily) defined in your root manifest they only take effect for albums in which their `enabled` flag is set to `true`. |
-| `outputs.<name>.enabled` | - | `true` | Toggle transcoding for a given output.  Default is `false` and in the normal use case you'll set it to `true` for any album you want in a given target.  NB: Bulklift won't transcode an album unless its directory contains a manifest file, so setting `enabled=true` at the root level won't have an effect for dirs with no `.bulklift.yaml`. |
-| `outputs.<name>.sanitize_paths` | - | `vfat` | Translate output path to avoid special characters unsupported on vfat/fat32.  NB: sanitization is applied to the path generated from `config.target.album_dir` + the source track name but **not** to the path to your target tree specified in `outputs.<name>.path`. |
-| `outputs.<name>.codec` | Y | `copy`, `opus`, `lame` | Codec to use when transcoding objects described by this manifest.  Typically you'll set this once when defining the output.  However you may want to override it in some cases, e.g. to copy mp3 audio rather than re-transcoding it to opus. |
-| `outputs.<name>.codec_version` | - | `v1.3.2` | Arbitrary string you can use to identify the version of the codec used to generate targets.  This is used to form part of the target signature; change it when you update your codec to trigger re-transcoding with the new version.  |
-| `outputs.<name>.opus_bitrate`| - | `128k` | Bitrate to use for libopus.  Encoding is VBR so results are approximate. |
-| `outputs.<name>.lame_vbr`| - | `3` | VBR setting for libmp3lame.  Encoding is VBR so results are approximate. |
-| `outputs.<name>.filters.include` | - | `["1-*.flac"]` | List of globs that audio files must match to be included.  Applied before any `exclude` filters.  Use a filter like `1*` to transcode only the first disc of a two-album set.  |
-| `outputs.<name>.filters.exclude` | - | `["*track_i_do_not_like.flac"]` | List of globs audio files must *not* match to be included.  Applied after `include` filters.  |
-| `metadata.*`| Y | - | Mapping of metadata to use for the content.  To avoid repetition you can build this up level by level - see the [examples](examples/) for how. |
+| `outputs`  | -        | `[]`    | List of outputs BL _may_ transcode to.  While typically (but not necessarily) defined in your root manifest they only take effect for albums in which their `enabled` flag is set to `true`. |
+| `outputs[].name` | - | `myname` | Textual name for the output.  Primarily used for error messages. |
+| `outputs[].enabled` | - | `true` | Toggle transcoding for a given output.  Default is `false` and in the normal use case you'll set it to `true` for any album you want in a given target.  NB: Bulklift won't transcode an album unless its directory contains a manifest file, so setting `enabled=true` at the root level won't have an effect for dirs with no `.bulklift.yaml`. |
+| `outputs[].sanitize_paths` | - | `vfat` | Translate output path to avoid special characters unsupported on vfat/fat32.  NB: sanitization is applied to the path generated from `config.target.album_dir` + the source track name but **not** to the path to your target tree specified in `outputs.<name>.path`. |
+| `outputs[].formats` | Y | `['opus', 'mp3']` | List of codecs the output supports in order of precedence.  In the case of the example Bulklift will use existing .opus files if available then fall back to transcoding lossless -> opus, or if that isn't possible using an mp3 file.  Typically you'll set this once when defining the output.   |
+| `outputs[].opus_bitrate`| - | `128k` | Bitrate to use for libopus.  Encoding is VBR so results are approximate. |
+| `outputs[].lame_vbr`| - | `3` | VBR setting for libmp3lame.  Encoding is VBR so results are approximate. |
+| `outputs[].filters.include` | - | `["1-*.flac"]` | List of globs that audio files must match to be included.  Applied before any `exclude` filters.  Use a filter like `1*` to transcode only the first disc of a two-album set.  |
+| `outputs[].filters.exclude` | - | `["*track_i_do_not_like.flac"]` | List of globs audio files must *not* match to be included.  Applied after `include` filters.  |
+| `metadata.*`| Y | - | Mapping of metadata to use for the content.  To avoid repetition you can build this up level by level. |
 
 Bulklift will interpolate environment variables used within paths, e.g. `${HOME}/media/target_devices/mp3_player`.
-
-Examples showing use of the config tree are shown in [examples](examples/).
 
 
 ## File Naming
@@ -141,11 +145,11 @@ If you can't get lossless audio for your source tree don't worry - a `copy` dumm
 ## Output Formats
 The following codecs can be specified for targets:
 
-| Label   | Format  | Codec  | Recommended quality | Notes  |
-|---------|---------|--------|---------------------|--------|
-| `opus`  | [opus](https://en.wikipedia.org/wiki/Opus_%28audio_format%29) | libopus  | 96k (electronic); 112k (other)  | A modern codec with better performance than mp3.  Supported by Android, VLC and most modern player software.  Definitely not supported by your shonky old mp3 player.  Always used in VBR mode.  |
-| `lame`  | [mp3](https://en.wikipedia.org/wiki/MP3)  | libmp3lame  | 3 (electronic); 2 (other)  | The [lame](http://lame.sourceforge.net/) encoder producting the venerable mp3 format.  Quality levels are for VBR; see their [docs](http://lame.sourceforge.net/vbr.php). |
-| `copy`  | -  | - | - | Copies audio from the source without transcoding.  Output will be the exact same bitrate and format as input.  Content is still run through ffmpeg so we retain the potential to change metadata.  Use this if you don't have a lossless copy of the original and don't want to further reduce its quality.  |
+| Label   | Codec  | Recommended quality | Notes  |
+|---------|--------|--------|---------------------|
+| [`opus`](https://en.wikipedia.org/wiki/Opus_%28audio_format%29)  | libopus  | [libopus](https://opus-codec.org/)  | 96k (electronic); 112k (other)  | A modern codec with better performance than mp3.  Supported by Android, VLC and most modern player software.  Definitely not supported by your shonky old mp3 player.  Always used in VBR mode.  |
+| [`mp3`](https://en.wikipedia.org/wiki/MP3)  | libmp3lame  | 3 (electronic); 2 (other)  | The [lame](http://lame.sourceforge.net/) encoder producting the venerable mp3 format.  Quality levels are for VBR; see their [docs](http://lame.sourceforge.net/vbr.php). |
+| `copy` | - | - | Copies audio from the source without transcoding.  Output will be the exact same bitrate and format as input.  Audio bitstream is still run through ffmpeg so we retain the potential to change metadata.  Use this if you don't have a lossless copy of the original and don't want to further reduce its quality.  |
 
 
 ## Tips & Tricks
