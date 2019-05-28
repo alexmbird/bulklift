@@ -26,6 +26,8 @@
 -   [ ] FEATURE: "virtual" sources.  Run an external command (e.g. `wget ...`) to get media from elsewhere
 -   [ ] FEATURE: config param for size of target and alert when it has been exceeded
 -   [X] <strike>QUALITY: make signatures less sensitive to changes in yaml formatting</strike>
+-   [ ] QUALITY: Switch to [ruaml.yaml](https://yaml.readthedocs.io/en/latest/overview.html)
+-   [ ] Switch single use path modifications to [`PurePath.joinpath`](https://docs.python.org/3.5/library/pathlib.html#pathlib.PurePath.joinpath)
 -   [ ] Check manifest content in test mode, not just yaml parsing
 -   [ ] Test new manifests after they get created in edit mode
 -   [ ] Extra output formats (m4a)

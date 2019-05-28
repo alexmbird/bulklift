@@ -97,8 +97,6 @@ class Signature(object):
     with indent(2):
       for name in list(self.tree['files'].keys()):
         if name not in expected:
-          if verbose:
-            puts("Removing {}".format(name))
           del self.tree['files'][name]
           self.dirty = True
 

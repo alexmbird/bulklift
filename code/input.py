@@ -92,13 +92,10 @@ class InputAlbum(object):
           )
     return rewritten
 
-  def transcode(self, verbose=True):
-    """ Generate the desired output albums from this source """
+  def _transcodeJobs(self):
+    """ Return a list of FFmpegWrapper objects, one for each source file that
+        has work to do """
     ffmpeg_jobs = []
-    def do_job(j):
-      if verbose:
-        puts("Transcoding {} ({:d} outputs)".format(j.source_path.name, len(j)))
-      j.run()
     for potential in self.files():
       # puts('potential: {}'.format(potential))
       ffmpeg = FFmpegWrapper(
@@ -108,16 +105,32 @@ class InputAlbum(object):
         oa.incorporate(potential, ffmpeg)
       if len(ffmpeg) > 0:  # outputs are expected
         ffmpeg_jobs.append((oa, ffmpeg))
+    return ffmpeg_jobs
 
-    with ThreadPoolExecutor(max_workers=self.transcoding_threads) as pool:
-      futures = [pool.submit(do_job, ffmpeg) for oa, ffmpeg in ffmpeg_jobs]
-      try:
-        pool.shutdown()
-      except KeyboardInterrupt as e:
-        for future in futures:
-          future.cancel()
-        # Re-raising the exception blows up threading.  Make new one.
-        raise TranscodingError("Keyboard interrupt; aborted transcoding")
+  def transcode(self, verbose=True):
+    """ Generate the desired output albums from this source """
+    def do_job(j):
+      if verbose:
+        puts("Transcoding {} ({})".format(
+          j.source_path.name, '/'.join(j.output_codecs))
+        )
+      j.run()
+    jobs = self._transcodeJobs()
+    if len(jobs):
+      if verbose:
+        puts("Transcoding new media...")
+      with indent(2):
+        with ThreadPoolExecutor(max_workers=self.transcoding_threads) as pool:
+          futures = [pool.submit(do_job, ffmpeg) for oa, ffmpeg in jobs]
+          try:
+            pool.shutdown()
+          except KeyboardInterrupt as e:
+            for future in futures:
+              future.cancel()
+            # Re-raising the exception blows up threading.  Make new one.
+            raise TranscodingError("Keyboard interrupt; aborted transcoding")
+    else:
+      puts("Nothing new to transcode")
 
     for oa in self.output_albums:
       oa.finalize(verbose=verbose)

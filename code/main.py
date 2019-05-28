@@ -35,9 +35,8 @@ def cmd_transcode(args):
       puts("Cleaning up redundant dirs in output tree '{}'".format(oconf['name']))
       otree = OutputTree(Path(oconf['path']))
       with indent(2):
-        output_albums = list(chain([ia.output_albums for ia in input_albums]))
-        output_paths = [oa.path for oa in output_albums]
-        otree.cleanup(expected_dirs=output_paths)
+        output_albums = list(chain.from_iterable([ia.output_albums for ia in input_albums]))
+        otree.cleanup(expected_dirs=[oa.path for oa in output_albums])
 
 
 def cmd_test(args):

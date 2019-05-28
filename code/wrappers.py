@@ -73,7 +73,7 @@ class R128gainWrapper(ExternalCommandWrapper):
                binary=None):
     """ Initialize the r128gain wrapper """
     super(R128gainWrapper, self).__init__(binary=binary)
-    self.args += chain(
+    self.args += chain.from_iterable([
       ['--opus-output-gain', '--recursive'],
       ['--verbosity', verbosity],
       ['--ffmpeg-path', ffmpeg_binary] if ffmpeg_binary else [],
@@ -81,7 +81,7 @@ class R128gainWrapper(ExternalCommandWrapper):
       ['--album-gain'] if album_gain else [],
       ['--thread-count', str(threads)] if threads else [],
       [str(target_dir)]
-    )
+    ])
 
 
 class FFmpegWrapper(ExternalCommandWrapper):
@@ -95,6 +95,7 @@ class FFmpegWrapper(ExternalCommandWrapper):
     self.source_path = source_path
     self.args += ['-y', '-loglevel', loglevel, '-i', str(source_path)]
     self.args_metadata = self.metadataOpts(metadata)
+    self.output_codecs = []
 
   def run(self, *args, **kwargs):
     """ run() method overridden to create destination dirs and raise an error
@@ -108,8 +109,8 @@ class FFmpegWrapper(ExternalCommandWrapper):
   @staticmethod
   def metadataOpts(metadata={}):
     """ Translate a dict of metadata into ffmpeg -metadata foo=bar options """
-    return list(chain(
-      *[
+    return list(chain.from_iterable(
+      [
         ('-metadata', '{}={}'.format(k,v), '-metadata:s:a', '{}={}'.format(k,v))
         for k, v in metadata.items()
       ]
@@ -122,6 +123,7 @@ class FFmpegWrapper(ExternalCommandWrapper):
     self.args += self.args_metadata
     self.args += [str(output_path)]
     self.expected_outputs.append(output_path)
+    self.output_codecs.append('copy')
 
   def appendOutputLame(self, output_path, vbr=3):
     """ Add arguments to write an mp3 file """
@@ -131,6 +133,7 @@ class FFmpegWrapper(ExternalCommandWrapper):
     self.args += ['-id3v2_version', '3', '-write_id3v1', '1', '-write_xing', '1']
     self.args += [str(output_path)]
     self.expected_outputs.append(output_path)
+    self.output_codecs.append('mp3')
 
   def appendOutputOpus(self, output_path, bitrate='128k'):
     """ Add arguments to write an opus file """
@@ -140,3 +143,4 @@ class FFmpegWrapper(ExternalCommandWrapper):
     self.args += self.args_metadata
     self.args += [str(output_path)]
     self.expected_outputs.append(output_path)
+    self.output_codecs.append('opus')
