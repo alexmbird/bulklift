@@ -7,6 +7,7 @@ from util.file import is_parent_path, filename_matches_globs, \
   AUDIO_FORMATS, AUDIO_FORMATS_LOSSLESS, IMAGE_FORMATS
 from util.sanitize import FILENAME_SANITIZERS
 
+from manifest import MetadataError
 from wrappers import R128gainWrapper
 from signature import Signature
 from handlers import FORMAT_HANDLERS, OutputHandlerCopy
@@ -59,7 +60,12 @@ class OutputAlbum(object):
   def albumPath(self, metadata):
     """ Return the output path for this album """
     tconf = self.mconfig['target']
-    album_dir = Path(tconf['album_dir'].format(**metadata))
+    try:
+      album_dir = Path(tconf['album_dir'].format(**metadata))
+    except KeyError:
+      raise MetadataError("Failed to interpolate template '{}' with metadata: {}".format(
+        tconf['album_dir'], metadata
+      ))
     return Path(self.oconfig['path']) / self.sanitize(album_dir)
 
   @property
@@ -137,7 +143,9 @@ class OutputAlbum(object):
       binary=rconf['r128gain_path']
     )
     if verbose:
-      puts("Running r128gain for output {}...".format(self.output_name))
+      puts("Running r128gain for output {} ({} mode)...".format(
+        self.output_name, rconf['type'])
+      )
     r128.run(output=False)
 
   def incorporate(self, source_path, ffmpeg):
@@ -158,11 +166,13 @@ class OutputAlbum(object):
     desired = self.oconfig['formats'][0]
     if ext in self.oconfig['formats'] or desired == 'copy':
       handler_class = OutputHandlerCopy
-    else:
+    elif ext in AUDIO_FORMATS_LOSSLESS:
       try:
         handler_class = FORMAT_HANDLERS[desired]
       except KeyError:
-        return    # unknown format; ignore
+        raise ValueError("Your primary format ('{}') isn't one I can transcode to".format(ext))
+    else:
+      return  # unsupported format for this media; skip it
 
     # If we reach this point we know how to transcode the media
     h = handler_class(source_path, self.path, self.oconfig, self.sanitize)
