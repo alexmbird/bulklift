@@ -88,7 +88,7 @@ class OutputAlbum(object):
         adding artwork and signature + running r128gain """
     if self.dirty:
       if verbose:
-        puts("Finalizing for output '{}'".format(self.output_name))
+        puts("Finalizing for output '{}' @ {}".format(self.output_name, self.path))
       with indent(2):
         self.copyArtwork(verbose=verbose)
         self.removeOrphans(verbose=verbose)

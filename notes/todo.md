@@ -21,17 +21,17 @@
 -   [X] <strike>QUALITY: change `vfat_sanitize()` to use whitelist (including `string.ascii_letters`) rather than blacklist.  This will exclude strange unicode.</strike>
 -   [X] <strike>QUALITY: `functools.lru_cache` for loading manifests</strike>
 -   [X] <strike>IMPROVEMENT: when there are multiple outputs, transcode to both in a single ffmpeg run</strike>
+-   [X] <strike>QUALITY: make signatures less sensitive to changes in yaml formatting</strike>
+-   [X] <strike>Unit testing against real (generated) trees of files</strike>
 -   [ ] QUALITY: use a `TargetTree` object to handle chown/chmod/cleanup
 -   [ ] QUALITY: type hinting
 -   [ ] FEATURE: "virtual" sources.  Run an external command (e.g. `wget ...`) to get media from elsewhere
 -   [ ] FEATURE: config param for size of target and alert when it has been exceeded
--   [X] <strike>QUALITY: make signatures less sensitive to changes in yaml formatting</strike>
--   [ ] QUALITY: Switch to [ruaml.yaml](https://yaml.readthedocs.io/en/latest/overview.html)
+-   [ ] QUALITY: Switch to [ruaml.yaml](https://yaml.readthedocs.io/en/latest/overview.html) for more control over yaml formatting
 -   [ ] Switch single use path modifications to [`PurePath.joinpath`](https://docs.python.org/3.5/library/pathlib.html#pathlib.PurePath.joinpath)
 -   [ ] Check manifest content in test mode, not just yaml parsing
 -   [ ] Test new manifests after they get created in edit mode
 -   [ ] Extra output formats (m4a)
 -   [ ] Release on PyPy
 -   [ ] Static release builds
--   [ ] Unit testing against real (generated) trees of files
 -   [ ] QUALITY: [f-strings](https://realpython.com/python-f-strings/) for readability (but not until Python >= 3.6 is more common)

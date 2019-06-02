@@ -15,8 +15,8 @@ Features:
 -  Automatically add [replaygain](https://en.wikipedia.org/wiki/ReplayGain) tags to output files using the excellent [r128gain](https://github.com/desbma/r128gain)
 -  Inheritable, per-directory config system makes it a breeze to setup
 -  Manifests are just text files stored alongside your music; no database to corrupt or lose
--  Toggle the output tree(s) a source album will be transcoded to.  Want only half of Lady Gaga's albums on your phone?  With each at a different bitrate?  Done.
--  Include/exclude specific tracks based upon filename globbing.  Only want disc 1 of a 3-disc set?  Simply include `1-*.flac`.
+-  Toggle which output tree(s) a source album will be transcoded to
+-  Include/exclude specific tracks based upon filename globbing
 -  Copies album art files (gif, png, jpg) unmolested to the output directory
 -  Passthrough `copy` format to copy files without re-encoding
 -  Minimise IO by transcoding all copies of a source within a [single ffmpeg run](https://trac.ffmpeg.org/wiki/Creating%20multiple%20outputs)
@@ -59,9 +59,24 @@ source_tree > $ bulklift transcode .                # transcode any new targets
 
 ## Common Operations
 
--   **Regenerate an album** (e.g. if your encoder has improved) - delete the directory from your output tree(s) and run `bulklift transcode` again.
--   **Edit a manifest** - `bulklift edit [path to dir]`.  Default is the current directory.  If no `.bulklift.yaml` exists Bulklift will intelligently generate a template based on the directory's contents and the manifests of its ancestors.
--   **Test your manifests** - `bulklift test <source_root>`.  Prints info about each manifest it finds.
+### Basic Transcoding
+```
+$ bulklift transcode /path/to/media/root
+```
+
+### Re-Encode Files of One Type
+Say you've just updated libopus to a newer, better version.  How to re-encode _just_ the .opus files?  Simply delete them and allow Bulklift to create replacements...
+
+```
+$ cd /output/tree/root   # be sure to do this on the output, not the source!
+$ find . -name '*.opus' -delete
+$ bulklift transcode /path/to/source/root
+```
+
+### Other Useful Operations
+
+-   Find all instances of a malformed parameter: `find . -name .bulklift.yaml -exec grep -H 'format:' '{}' ';'`
+-   Edit a manifest: `bulklift edit [path to dir]`.  Default is the current directory.  If no `.bulklift.yaml` exists Bulklift will try to generate a template based on the directory's contents and the manifests of its ancestors.  Remember a dir inherits the permissions of its parents so you can delete most of the config.
 
 
 ## Configuration
@@ -96,8 +111,8 @@ Let's demonstrate with an example.  My source music library looks like this:
 ```
 
 1.  At the top level set global config options (e.g. path to ffmpeg) and declare target trees with their default bitrates and formats.  This must contain `root: true` so Bulklift knows where to stop when loading manifests from subdirectories deep in your tree.
-2.   At an intermediate level (`__AMBIENT`) a second `.bulklift.yaml` manifest specifying metadata for the genre (`genre: Ambient`).
-3.   At the artist level, a third `.bulklift.yaml` specifying metadata for the artist (`artist: Super Xylophone Man`)
+2.   At an intermediate level (`__AMBIENT`) a `.bulklift.yaml` manifest specifying metadata for the genre (`genre: Ambient`).
+3.   At the artist level, a third `.bulklift.yaml` specifies metadata for the artist (`artist: Artist B`)
 4.   At the bottom level (the individual album) switch encoding on (`enabled: true`) for one or more targets and add metadata tags for the name and year of the album (`album: Greatest Hits` / `year: 2018`).
 
 The key concept is that Bulklift merges the the manifest of any directory with those of its parents.  The deepest manifest (i.e. the one in the dir with your music) has precendence so you can override settings from parent directories.  Want to use a different build of ffmpeg to transcode your Dubstep collection?  Override the artist for one particular collaboration album?  The world is your oyster.
