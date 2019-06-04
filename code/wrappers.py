@@ -1,5 +1,6 @@
 import subprocess as sp
 from itertools import chain
+from clint.textui import puts, indent
 
 
 class ExternalCommandError(Exception):
@@ -103,7 +104,10 @@ class FFmpegWrapper(ExternalCommandWrapper):
     if len(self.expected_outputs) == 0:
       raise NothingToDoError("No outputs to transcode")
     for output_path in self.expected_outputs:
-      output_path.parent.mkdir(parents=True, exist_ok=True)
+      if not output_path.parent.exists():
+        puts("Creating output path '{}'".format(output_path.parent))
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
     super(FFmpegWrapper, self).run(*args, **kwargs)
 
   @staticmethod
