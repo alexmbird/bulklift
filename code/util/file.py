@@ -13,7 +13,7 @@ AUDIO_FORMATS_LOSSY = dict.fromkeys([
 ])
 
 AUDIO_FORMATS_LOSSLESS = dict.fromkeys([
-  'flac', 'alac', 'wav',
+  'flac', 'alac', 'wav', 'ape'
 ])
 
 AUDIO_FORMATS = dict.fromkeys(
