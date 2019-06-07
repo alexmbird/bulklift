@@ -72,14 +72,15 @@ class R128gainWrapper(ExternalCommandWrapper):
   def __init__(self, target_dir='.', album_gain=True, threads=None,
                ffmpeg_binary=None, verbosity='warning', dry_run=False,
                binary=None):
-    """ Initialize the r128gain wrapper """
+    """ Initialize the r128gain wrapper.  If we aren't doing album gain we skip
+        files with existing tags, beause they won't have changed.  """
     super(R128gainWrapper, self).__init__(binary=binary)
     self.args += chain.from_iterable([
       ['--opus-output-gain', '--recursive'],
       ['--verbosity', verbosity],
       ['--ffmpeg-path', ffmpeg_binary] if ffmpeg_binary else [],
       ['--dry-run'] if dry_run else [],
-      ['--album-gain'] if album_gain else [],
+      ['--album-gain'] if album_gain else ['--skip-tagged'],
       ['--thread-count', str(threads)] if threads else [],
       [str(target_dir)]
     ])
