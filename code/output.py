@@ -83,6 +83,11 @@ class OutputAlbum(object):
       return False
     return True
 
+  def prepare(self):
+    """ Prepare the output album for writing """
+    puts("Creating output dir {}".format(self.path))
+    self.path.mkdir(parents=True, exist_ok=True)
+
   def finalize(self, verbose=True):
     """ If we've made any changes to the output dir finalize the album by
         adding artwork and signature + running r128gain """
