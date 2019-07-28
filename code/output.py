@@ -83,9 +83,10 @@ class OutputAlbum(object):
       return False
     return True
 
-  def prepare(self):
+  def prepare(self, verbose=True):
     """ Prepare the output album for writing """
-    puts("Creating output dir {}".format(self.path))
+    if verbose:
+      puts("Creating output dir {}".format(self.path))
     self.path.mkdir(parents=True, exist_ok=True)
 
   def finalize(self, verbose=True):

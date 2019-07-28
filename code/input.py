@@ -54,6 +54,7 @@ class InputAlbum(object):
     """ Initialize InputAlbum and setup its outputs.  `metadata` is straight
         from the manifest; replacements are applied here.   """
     self.path = path
+    self.mconf = mconf
     self.transcoding_threads = mconf['transcoding']['threads']
     self.metadata_rewrites = self.bakeMetadata(
       metadata, mconf['transcoding']['rewrite_metadata']
@@ -99,7 +100,8 @@ class InputAlbum(object):
     for potential in self.files():
       # puts('potential: {}'.format(potential))
       ffmpeg = FFmpegWrapper(
-        source_path=potential, metadata=self.metadata_rewrites
+        source_path=potential, metadata=self.metadata_rewrites,
+        binary=self.mconf['transcoding']['ffmpeg_path']
       )
       for oa in self.output_albums:
         oa.incorporate(potential, ffmpeg)
@@ -114,14 +116,15 @@ class InputAlbum(object):
         puts("Transcoding {} ({})".format(
           j.source_path.name, '/'.join(j.output_codecs))
         )
-      j.run()
+        # puts("Args: {}".format(j.args))
+      j.run()  # different process not connected to our stdout
     jobs = self._transcodeJobs()
     if len(jobs):
       if verbose:
         puts("Transcoding new media...")
       with indent(2):
         for oa in self.output_albums:  # make dir before it gets used as output
-          oa.prepare()
+          oa.prepare(verbose=verbose)
         with ThreadPoolExecutor(max_workers=self.transcoding_threads) as pool:
           futures = [pool.submit(do_job, ffmpeg) for oa, ffmpeg in jobs]
           try:

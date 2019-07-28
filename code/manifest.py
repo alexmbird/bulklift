@@ -2,6 +2,7 @@ import yaml
 import functools
 from copy import deepcopy
 from pathlib import Path
+import pprint
 
 from clint.textui import puts, colored
 
@@ -42,6 +43,11 @@ class ManifestConfig(dict):
     rg.setdefault('type', 'album')
     self.setdefault('target', {})
     self['target'].setdefault('album_dir', self.DFL_ALBUM_DIR_TEMPLATE)
+
+  def dump(self):
+    """Dump human-readable config for debugging"""
+    pp = pprint.PrettyPrinter(indent=2)
+    puts(pp.pformat(self))
 
 
 class ManifestOutput(dict):

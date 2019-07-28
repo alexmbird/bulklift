@@ -20,21 +20,21 @@ class ExternalCommandWrapper(object):
     """ Initialize the wrapper for arbitrary external commands """
     super(ExternalCommandWrapper, self).__init__()
 
-    self.binary = binary if binary is not None else self.DEFAULT_BINARY
+    self.binary = binary or self.DEFAULT_BINARY
     self.args = [self.binary] + args
     self.expected_outputs = list(expected_outputs) # copy it!
 
   def run(self, output=False):
     """ Execute the wrapped command in a subprocess """
     if output:
-      print("cmd is {}".format(self.args))
-      print("expected_outputs is {}".format(self.expected_outputs))
+      puts("cmd is {}".format(self.args))
+      puts("expected_outputs is {}".format(self.expected_outputs))
     cp = sp.run(self.args, check=True, stdout=sp.PIPE, stderr=sp.PIPE)
     if not all([p.is_file() for p in self.expected_outputs]):
       raise ExternalCommandError("An expected output file was not created")
     if output:
-      print("STDOUT: {}".format(cp.stdout))
-      print("STDERR: {}".format(cp.stderr))
+      puts("STDOUT: {}".format(cp.stdout))
+      puts("STDERR: {}".format(cp.stderr))
     return cp
 
   def __len__(self):
