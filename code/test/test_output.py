@@ -1,6 +1,7 @@
 import unittest
 import tempfile
 from pathlib import Path
+import shutil
 
 from test.fakesourcetree import FakeSourceTreeAlbum
 from output import OutputTree, OutputAlbum
@@ -59,12 +60,17 @@ class TestOutputAlbum(unittest.TestCase):
     cls.INPUT_PATH.mkdir()
     cls.FAKE_ALBUM = FakeSourceTreeAlbum(base_path=cls.INPUT_PATH)
     cls.OUTPUT_PATH = cls.TEMPPATH / 'output'
-    cls.OUTPUT_PATH.mkdir()
 
   @classmethod
   def tearDownClass(cls):
     """ Remove temp dir """
     cls.TEMPDIR.cleanup()
+
+  def setUp(self):
+    self.OUTPUT_PATH.mkdir()  # fresh output dir for every test
+
+  def tearDown(self):
+    shutil.rmtree(self.OUTPUT_PATH)  # fresh output dir for every test
 
   def _makeOutputAlbum(self, album_name, formats=['opus']):
     """ Create an OutputAlbum + metadata + configs suitable for tests """
@@ -73,6 +79,7 @@ class TestOutputAlbum(unittest.TestCase):
     metadata = self.METADATA.copy()
     metadata['album'] = album_name
     oa = OutputAlbum(mconfig, oconfig, metadata)
+    oa.path.mkdir(parents=True, exist_ok=True)
     return (mconfig, oconfig, metadata, oa)
 
   def test_album_path(self):
@@ -139,7 +146,6 @@ class TestOutputAlbum(unittest.TestCase):
     ffmpeg_art = FFmpegWrapper(source_path=self.FAKE_ALBUM.cover_gif)
     oa.incorporate(self.FAKE_ALBUM.cover_gif, ffmpeg_art) # no audio yet
     self.assertEqual(len(ffmpeg_art), 0)
-    self.assertFalse(oa.path.exists())                # not yet created
     source_t = self.FAKE_ALBUM.tracks[1]
     ffmpeg_track = FFmpegWrapper(source_path=source_t)
     oa.incorporate(source_t, ffmpeg_track) # add audio

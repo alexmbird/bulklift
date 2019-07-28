@@ -124,7 +124,7 @@ class InputAlbum(object):
         puts("Transcoding new media...")
       with indent(2):
         for oa in self.output_albums:  # make dir before it gets used as output
-          oa.prepare()
+          oa.prepare(verbose=verbose)
         with ThreadPoolExecutor(max_workers=self.transcoding_threads) as pool:
           futures = [pool.submit(do_job, ffmpeg) for oa, ffmpeg in jobs]
           try:
