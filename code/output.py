@@ -26,6 +26,9 @@ class OutputTree(object):
     """ Remove any dirs from the target tree that aren't a member of
         expected_dirs or their parent paths. Root of tree is left untouched. """
     def clean(victim, root=False):
+      # Hack: don't delete Syncthing metadata
+      if victim.parts[-1] in ['.stfolder', '.stignore']:
+        return
       for entry in victim.iterdir():
         if entry.is_dir():
           clean(entry)
