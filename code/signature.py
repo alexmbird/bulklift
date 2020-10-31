@@ -1,5 +1,6 @@
 import yaml
 from hashlib import sha256
+import functools
 
 from clint.textui import puts, colored, indent
 
@@ -100,6 +101,7 @@ class Signature(object):
           del self.tree['files'][name]
           self.dirty = True
 
+  @functools.lru_cache(maxsize=1024)
   def load(self):
     """ Attempt to load existing signature data """
     with self.signature_file.open('r', encoding='utf8') as stream:
