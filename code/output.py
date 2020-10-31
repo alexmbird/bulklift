@@ -28,6 +28,7 @@ class OutputTree(object):
     def clean(victim, root=False):
       # Hack: don't delete Syncthing metadata
       if victim.parts[-1] in ['.stfolder', '.stignore']:
+        puts(colored.red("Not cleaning up '{}'".format(victim)))
         return
       for entry in victim.iterdir():
         if entry.is_dir():
