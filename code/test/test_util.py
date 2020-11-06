@@ -42,16 +42,6 @@ class TestVfatSanitize(unittest.TestCase):
     )
 
 
-class TestIsParentPath(unittest.TestCase):
-
-  def test_is_parent_path(self):
-    "is_parent_path detects parent/child paths"
-    self.assertTrue(is_parent_path(Path('/tmp'), Path('/tmp/a_filename')))
-    self.assertFalse(is_parent_path(Path('/usr'), Path('/tmp')))
-    with self.assertRaises(ValueError):
-      is_parent_path(Path('/tmp/a_nonexistent_file_7342jk'), Path('/tmp/foo'))
-
-
 class TestIsAudioDir(unittest.TestCase):
 
   @classmethod

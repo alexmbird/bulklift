@@ -24,7 +24,11 @@ class OutputTree(object):
 
   def cleanup(self, expected_dirs, verbose=True):
     """ Remove any dirs from the target tree that aren't a member of
-        expected_dirs or their parent paths. Root of tree is left untouched. """
+        expected_dirs or their parent paths. Root of tree is left untouched.
+        Stray files (not dirs) are handled earlier, after transcoding.
+        The string dir comparison here is far from clever, but it is fast. """
+    # Cache resolved paths as strings
+    expected_dirs_s = [d.resolve().as_posix() for d in expected_dirs]
     def clean(victim, root=False):
       # Hack: don't delete Syncthing metadata
       if victim.parts[-1] in ['.stfolder', '.stignore']:
@@ -34,7 +38,8 @@ class OutputTree(object):
         if entry.is_dir():
           clean(entry)
       if not root:
-        if not any(map(lambda ed: is_parent_path(victim, ed), expected_dirs)):
+        victim_as_str = victim.resolve().as_posix()
+        if not any(map(lambda ed: ed.startswith(victim_as_str), expected_dirs_s)):
           if verbose:
             puts(colored.red("Removing '{}'".format(victim)))
           shutil.rmtree(str(victim), ignore_errors=True)

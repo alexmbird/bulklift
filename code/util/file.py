@@ -2,7 +2,6 @@
 
 from pathlib import Path
 import os.path
-import functools
 
 
 ##
@@ -49,17 +48,6 @@ def is_audio_dir(path):
       if p.suffix.lower().lstrip('.') in AUDIO_FORMATS:
         return True
   return False
-
-
-@functools.lru_cache(maxsize=2048)
-def is_parent_path(parent, child):
-  """ Return True if path `child` is within dir `parent`.  Pathlib.Path lacks a
-      contains() method so we do it all with strings.  """
-  if not parent.is_dir():
-    raise ValueError("parent must be a directory")
-  return child.resolve().as_posix().startswith(
-    parent.resolve().as_posix()
-  )
 
 
 def expandvars(s=None):
