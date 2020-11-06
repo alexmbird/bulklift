@@ -3,7 +3,7 @@ from pathlib import Path
 
 from clint.textui import colored, puts, indent
 
-from util.file import is_parent_path, filename_matches_globs, \
+from util.file import filename_matches_globs, \
   AUDIO_FORMATS, AUDIO_FORMATS_LOSSLESS, IMAGE_FORMATS
 from util.sanitize import FILENAME_SANITIZERS
 
