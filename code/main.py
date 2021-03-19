@@ -22,7 +22,7 @@ MIN_PYTHON_VERSION = (3,5,3)
 def cmd_transcode(args):
   """ Find any outstanding transcoding jobs and action them """
   puts("Walking media tree...")
-  tree_root = MediaSourceDir(Path(args.source_tree_root[0]))
+  tree_root = MediaSourceDir(Path(args.source_tree_root[0]), debug=args.debug)
   input_albums = [msd.album() for msd in tree_root.walk() if msd.is_transcodable()]
   for n, ia in enumerate(input_albums):
     puts("{} ({} of {})".format(ia, n+1, len(input_albums)))
@@ -47,7 +47,7 @@ def cmd_edit(args):
   manifest_path = Manifest.manifestFilePath(abspath)
   puts("Editing manifest for '{}'".format(manifest_path))
   if not manifest_path.exists():
-    manifest = Manifest.fromDir(abspath)
+    manifest = Manifest.fromDir(abspath, debug=args.debug)
     with manifest_path.open('w') as stream:
       stream.write(manifest.dumpTemplate())
   subprocess.run([

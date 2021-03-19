@@ -141,9 +141,11 @@ class Manifest(dict):
     return data
 
   @classmethod
-  def fromDir(cls, path, override={}):
+  def fromDir(cls, path, override={}, debug=False):
     """ Load the manifest from `path`, if present, and merge it with any parent
         manifests up to the root """
+    if debug:
+      puts("Reading manifest from {}".format(path))
     data = deepcopy(cls.loadYaml(path))
     got_root = data.get('root', False)
     # dict_deep_merge() doesn't do lists, so we have to re-pack the outputs

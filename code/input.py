@@ -18,10 +18,10 @@ class MediaSourceDir(object):
   """ A single directory within the media source tree, which may or may not be
       an album to transcode.  """
 
-  def __init__(self, path):
+  def __init__(self, path, debug=False):
     """ Initialize the MediaSourceDir given its path  """
     self.path = Path(path).resolve()  # resolve() is important - keep it!
-    self.manifest = Manifest.fromDir(path)
+    self.manifest = Manifest.fromDir(path, debug=debug)
 
   def walk(self):
     """ Recursively walk our tree, yielding a MediaSourceDir for every
