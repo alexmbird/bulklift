@@ -160,7 +160,7 @@ class Manifest(dict):
       raise ManifestError(
         "Root manifest could not be found; did you miss a 'root: true'?"
       )
-    return cls.fromDir(path.parent, data)
+    return cls.fromDir(path.parent, data, debug=debug)
 
   def dumpTemplate(self):
     """ Try to infer the directory level we're on and produce an appropriate
