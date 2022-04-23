@@ -1,6 +1,6 @@
 """ Utility functions for handling data structures """
 
-import collections
+import collections.abc
 import os
 
 
@@ -8,7 +8,7 @@ def dict_deep_merge(a, b):
   """ deep-merge the contents of dict b into dict a """
   for k, v in b.items():
     if (k in a and isinstance(a[k], dict)
-          and isinstance(b[k], collections.Mapping)):
+          and isinstance(b[k], collections.abc.Mapping)):
         dict_deep_merge(a[k], b[k])
     else:
         a[k] = b[k]

@@ -29,6 +29,11 @@ Bulklift is opinionated about the directory structure you keep your music in.  O
 Filenames are simply reused, but with the extension changed to match the output format.
 
 
+## Requirements
+
+- Python 3.10+
+- `apt install ffmpeg`
+
 ## Building
 ```plain
 $ python3 -m venv venv
