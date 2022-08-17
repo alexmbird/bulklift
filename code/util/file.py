@@ -9,7 +9,7 @@ import os.path
 ##
 
 AUDIO_FORMATS_LOSSY = dict.fromkeys([
-  'mp3', 'ogg', 'opus', 'm4a', 'mp4', 'wma'
+  'mp3', 'ogg', 'opus', 'm4a', 'mp4', 'wma', 'aea'
 ])
 
 AUDIO_FORMATS_LOSSLESS = dict.fromkeys([
