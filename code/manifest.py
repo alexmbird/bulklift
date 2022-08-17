@@ -114,7 +114,7 @@ class Manifest(dict):
     # Set defaults & translate some of our contents into specialized objects
     self.setdefault('metadata', {})
     self['config'] = ManifestConfig(self.get('config', {}))
-    self['outputs'] = [ManifestOutput(oconf) for oconf in self.get('outputs', [])]
+    self['outputs'] = [ManifestOutput(oconf) for oconf in self.get('outputs', []) if not oconf.get('deactivate', False)]
 
   @classmethod
   def manifestFilePath(cls, path):
