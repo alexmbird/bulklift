@@ -6,6 +6,15 @@ from subprocess import CalledProcessError
 from wrappers import ExternalCommandWrapper, R128gainWrapper, FFmpegWrapper, \
                      SoxWrapper, ExternalCommandError, NothingToDoError
 
+from util.file import find_in_path
+
+
+# Figure out paths to binaries to test with
+BIN_TRUE = find_in_path('true')
+BIN_FALSE = find_in_path('false')
+BIN_NONEXISTENT = '/nonexistent/path/to/binary_345570'
+BIN_TOUCH = find_in_path('touch')
+
 
 class TestExternalCommandWrapper(unittest.TestCase):
 
@@ -21,14 +30,14 @@ class TestExternalCommandWrapper(unittest.TestCase):
 
   def test_invocation(self):
     "Invoke an ExternalCommandWrapper"
-    ecr = ExternalCommandWrapper(binary='/bin/true')
+    ecr = ExternalCommandWrapper(binary=BIN_TRUE)
     result = ecr.run()
-    self.assertEqual(result.args[0], '/bin/true')
+    self.assertEqual(result.args[0], BIN_TRUE)
     self.assertEqual(result.returncode, 0)
-    ecr = ExternalCommandWrapper(binary='/bin/false')
+    ecr = ExternalCommandWrapper(binary=BIN_FALSE)
     with self.assertRaises(CalledProcessError):
       ecr.run()
-    ecr = ExternalCommandWrapper(binary='/nonexistent/path/to/binary_345570')
+    ecr = ExternalCommandWrapper(binary=BIN_NONEXISTENT)
     with self.assertRaises(FileNotFoundError):
       ecr.run()
 
@@ -36,13 +45,13 @@ class TestExternalCommandWrapper(unittest.TestCase):
     "ExternalCommandWrapper checks for expected outputs"
     file_present = Path(self.TEMPDIR.name) / 'empty_file'
     ecr = ExternalCommandWrapper(
-      binary='/bin/touch', args=[file_present], expected_outputs=[file_present]
+      binary=BIN_TOUCH, args=[file_present], expected_outputs=[file_present]
     )
     ecr.run()
     self.assertTrue(file_present.is_file())
     file_absent = Path(self.TEMPDIR.name) / 'missing_file'
     ecr = ExternalCommandWrapper(
-      binary='/bin/true', expected_outputs=[file_absent]
+      binary=BIN_TRUE, expected_outputs=[file_absent]
     )
     with self.assertRaises(ExternalCommandError):
       ecr.run()
@@ -117,6 +126,6 @@ class TestR128gainWrapper(unittest.TestCase):
     with self.assertRaises(CalledProcessError):
       ecr = R128gainWrapper(
         dry_run=True,
-        ffmpeg_binary='/non/existent/ffmpeg098'  # intentionally break it
+        ffmpeg_binary=BIN_NONEXISTENT  # intentionally break it
       )
       result = ecr.run()

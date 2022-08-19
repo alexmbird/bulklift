@@ -3,7 +3,7 @@ from pathlib import Path
 import tempfile
 
 from test.fakesourcetree import FakeSourceTreeAlbum
-from util.file import is_parent_path, is_audio_dir
+from util.file import is_audio_dir
 from util.sanitize import dummy_sanitize, vfat_sanitize
 from util.data import dict_not_nulls, available_cpu_count
 

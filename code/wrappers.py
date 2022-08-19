@@ -1,6 +1,7 @@
 import subprocess as sp
 from itertools import chain
 from clint.textui import puts, indent
+from util.file import find_in_path
 
 
 class ExternalCommandError(Exception):
@@ -14,7 +15,7 @@ class NothingToDoError(ExternalCommandError):
 class ExternalCommandWrapper(object):
   """ Wrap external commands with checking & arg-handling logic """
 
-  DEFAULT_BINARY = '/bin/true'
+  DEFAULT_BINARY = find_in_path('true')
 
   def __init__(self, binary=None, args=[], expected_outputs=[]):
     """ Initialize the wrapper for arbitrary external commands """
@@ -48,7 +49,7 @@ class SoxWrapper(ExternalCommandWrapper):
 
   # See http://billposer.org/Linguistics/Computation/SoxTutorial.html
 
-  DEFAULT_BINARY = '/usr/bin/sox'
+  DEFAULT_BINARY = find_in_path('sox')
 
   def __init__(self, output_path, duration=5, binary=None):
     """ Initialize the wrapper for sox """
@@ -67,7 +68,7 @@ class SoxWrapper(ExternalCommandWrapper):
 class R128gainWrapper(ExternalCommandWrapper):
   """ Wrap the r128gain utility """
 
-  DEFAULT_BINARY = '/usr/local/bin/r128gain'
+  DEFAULT_BINARY = find_in_path('r128gain')
 
   def __init__(self, target_dir='.', album_gain=True, threads=None,
                ffmpeg_binary=None, verbosity='warning', dry_run=False,
@@ -89,7 +90,7 @@ class R128gainWrapper(ExternalCommandWrapper):
 class FFmpegWrapper(ExternalCommandWrapper):
   """ Wrap ffmpeg, with methods to add multiple output files """
 
-  DEFAULT_BINARY = '/usr/bin/ffmpeg'
+  DEFAULT_BINARY = find_in_path('ffmpeg')
 
   def __init__(self, source_path, metadata={}, loglevel='error', binary=None):
     """ Initialize the ffmpeg wrapper """

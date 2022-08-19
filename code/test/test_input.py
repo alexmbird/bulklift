@@ -5,8 +5,13 @@ from pathlib import Path
 
 from test.fakesourcetree import FakeSourceTreeAlbum
 
+from util.file import find_in_path
+
 from manifest import ManifestConfig, ManifestOutput, MetadataError
 from input import InputAlbum
+
+
+BIN_FFMPEG = find_in_path('ffmpeg')
 
 
 class TestInputAlbum(unittest.TestCase):
@@ -21,7 +26,7 @@ class TestInputAlbum(unittest.TestCase):
 
   BASIC_CONFIG = {
     'transcoding': {
-      'ffmpeg_path': '/usr/local/bin/ffmpeg',  # default ubuntu 18 doesn't work
+      'ffmpeg_path': BIN_FFMPEG,
       'rewrite_metadata': {
         'artist': '{artist}',
         'track': '',

@@ -54,3 +54,21 @@ def expandvars(s=None):
   """ Return a copy of string `s` with ${ENV_VAR}s templated in.  If `s` was
       None return None, which is useful for handling config settings.  """
   return os.path.expandvars(s) if s is not None else None
+
+
+def first_existing_path(paths):
+  """ Return first path in supplied `paths` that actually exists; use this for
+      autodetecting binaries to use on a system """
+  for p in paths:
+    if os.path.isfile(p):
+      return p
+  raise FileNotFoundError("None of the supplied paths exists")
+
+def find_in_path(b):
+  """ Attempt to find binary `b` in $PATH; return it if available, otherwise 
+      raise a FileNotFoundError. """
+  for p in os.environ.get("PATH", "").split(":"):
+    target = os.path.join(p, b)
+    if os.path.exists(target):
+      return target
+  raise FileNotFoundError("None of the supplied paths exists")
