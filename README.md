@@ -142,6 +142,7 @@ Some of the more common options...
 | `outputs[].formats` | Y | `['opus', 'mp3']` | List of codecs the output supports in order of precedence.  In the case of the example Bulklift will use existing .opus files if available then fall back to transcoding lossless -> opus, or if that isn't possible using an mp3 file.  Typically you'll set this once when defining the output.   |
 | `outputs[].opus_bitrate`| - | `128k` | Bitrate to use for libopus.  Encoding is VBR so results are approximate. |
 | `outputs[].lame_vbr`| - | `3` | VBR setting for libmp3lame.  Encoding is VBR so results are approximate. |
+| `outputs[].aac_vbr`| - | `3` | VBR setting for libfdk_aac.  Encoding is VBR so results are approximate. |
 | `outputs[].filters.include` | - | `["1-*.flac"]` | List of globs that audio files must match to be included.  Applied before any `exclude` filters.  Use a filter like `1*` to transcode only the first disc of a two-album set.  |
 | `outputs[].filters.exclude` | - | `["*track_i_do_not_like.flac"]` | List of globs audio files must *not* match to be included.  Applied after `include` filters.  |
 | `metadata.*`| Y | - | Mapping of metadata to use for the content.  To avoid repetition you can build this up level by level. |

@@ -72,8 +72,23 @@ class OutputHandlerMp3(OutputHandlerBase):
     )
 
 
+class OutputHandlerM4a(OutputHandlerBase):
+  """ Handler for mp3 files """
+
+  FILE_EXTENSION = 'm4a'
+
+  def addToFFmpeg(self, ffmpeg):
+    """ Add an m4a output to ffmpeg """
+    ffmpeg.appendOutputM4a(
+      output_path = self.output_path,
+      # -c:a libfdk_aac
+      vbr=self.output_config['aac_vbr']
+    )
+
+
 FORMAT_HANDLERS = {
   'copy': OutputHandlerCopy,
   'opus': OutputHandlerOpus,
-  'mp3': OutputHandlerMp3
+  'mp3': OutputHandlerMp3,
+  'm4a': OutputHandlerM4a
 }
