@@ -81,7 +81,8 @@ class R128gainWrapper(ExternalCommandWrapper):
       ['--verbosity', verbosity],
       ['--ffmpeg-path', ffmpeg_binary] if ffmpeg_binary else [],
       ['--dry-run'] if dry_run else [],
-      ['--album-gain'] if album_gain else ['--skip-tagged'],
+      # no longer using --skip-tagged
+      ['--album-gain'] if album_gain else [],
       ['--thread-count', str(threads)] if threads else [],
       [str(target_dir)]
     ])
