@@ -148,7 +148,7 @@ class FFmpegWrapper(ExternalCommandWrapper):
     self.output_codecs.append('opus')
 
   def appendOutputM4a(self, output_path, vbr=3):
-      """ Add arguments to write an opus file """
+    """ Add arguments to write an opus file """
     self.args += ['-map', '0:a']
     self.args += ['-codec:a', 'libfdk_aac']
     self.args += ['-vbr', str(vbr)]
