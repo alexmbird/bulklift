@@ -136,7 +136,7 @@ class Manifest(dict):
     except FileNotFoundError:
       data = {}
     except yaml.scanner.ScannerError as e:
-      raise ManifestError("Error parsing {}:\n\n{}".format(manifest_path, e))
+      raise ManifestError("Error parsing {}:\n\n{}".format(man_path, e))
     data.setdefault('root', False)
     return data
 
